@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import OwnerLayout from '../../components/layouts/OwnerLayout';
@@ -138,32 +138,15 @@ function Stars({ score, count }) {
   );
 }
 
-function formatDateTime(s) {
-  if (!s) return '';
-  try {
-    const d = new Date(s);
-    return d.toLocaleString(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-  } catch { return String(s); }
-}
-
 export default function OwnerApplicants() {
   const { campaignId } = useParams();
   const navigate = useNavigate();
   const {
-    user, campaigns, influencers,
-    acceptApplication, rejectApplication, unassignInfluencer,
-    postComment, submitRating,
+    campaigns, influencers,
+    unassignInfluencer, submitRating,
   } = useAuth();
 
   const [filter, setFilter] = useState('all');
-
-  // Review-applicant modal state
-  const [reviewing, setReviewing] = useState(null); // application object
-  const [reply, setReply] = useState('');
-  const [posting, setPosting] = useState(false);
-  const [acting, setActing] = useState(false);
-  const [confirmAccept, setConfirmAccept] = useState(false);
-  const [confirmReject, setConfirmReject] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
 
   // Unassign modal
@@ -178,13 +161,6 @@ export default function OwnerApplicants() {
   const [ratingError, setRatingError] = useState('');
 
   const campaign = campaigns.find((c) => c.id === campaignId);
-
-  // Keep `reviewing` in sync with the latest campaigns state (so threads/status update live).
-  useEffect(() => {
-    if (!reviewing || !campaign) return;
-    const fresh = (campaign.applications || []).find((a) => a.influencerId === reviewing.influencerId);
-    if (fresh && fresh !== reviewing) setReviewing(fresh);
-  }, [campaigns, campaign, reviewing]);
 
   if (!campaign) {
     return (
@@ -215,58 +191,7 @@ export default function OwnerApplicants() {
   const canRate = ['submitted', 'closed'].includes(campaign.status) && hasAssigned;
 
   const openReview = (app) => {
-    setReviewing(app);
-    setReply('');
-    setConfirmAccept(false);
-    setConfirmReject(false);
-    setErrorMsg('');
-  };
-  const closeReview = () => {
-    setReviewing(null);
-    setReply('');
-    setConfirmAccept(false);
-    setConfirmReject(false);
-    setErrorMsg('');
-  };
-
-  const handlePostReply = async () => {
-    const body = reply.trim();
-    if (!body) return;
-    setPosting(true);
-    try {
-      await postComment(campaignId, reviewing.influencerId, body);
-      setReply('');
-    } catch (err) {
-      setErrorMsg(err.message || 'Could not send message');
-    } finally {
-      setPosting(false);
-    }
-  };
-
-  const handleAccept = async () => {
-    setActing(true);
-    setErrorMsg('');
-    try {
-      await acceptApplication(campaignId, reviewing.influencerId);
-      setConfirmAccept(false);
-    } catch (err) {
-      setErrorMsg(err.message || 'Could not accept');
-    } finally {
-      setActing(false);
-    }
-  };
-
-  const handleReject = async () => {
-    setActing(true);
-    setErrorMsg('');
-    try {
-      await rejectApplication(campaignId, reviewing.influencerId);
-      setConfirmReject(false);
-    } catch (err) {
-      setErrorMsg(err.message || 'Could not reject');
-    } finally {
-      setActing(false);
-    }
+    navigate(`/owner/applicants/${campaignId}/${app.influencerId}`);
   };
 
   const handleUnassign = async () => {
@@ -325,6 +250,16 @@ export default function OwnerApplicants() {
                 <button className="btn-line" onClick={() => setConfirmUnassign(true)}>Unassign</button>
               )}
             </div>
+          </div>
+        )}
+
+        {errorMsg && (
+          <div style={{
+            marginBottom: 16, padding: '10px 14px',
+            border: '1px solid var(--danger-border)', background: 'var(--danger-soft)',
+            color: 'var(--danger)', borderRadius: 10, fontSize: 13,
+          }}>
+            {errorMsg}
           </div>
         )}
 
@@ -414,157 +349,6 @@ export default function OwnerApplicants() {
           </>
         )}
       </div>
-
-      {/* ===================== REVIEW APPLICANT MODAL ===================== */}
-      {reviewing && (() => {
-        const inf = getInf(reviewing.influencerId, reviewing);
-        if (!inf) return null;
-        const st = STATUS[reviewing.status];
-        const blockedByOther = hasAssigned && campaign.assignedInfluencer !== reviewing.influencerId;
-
-        return (
-          <div className="ob-modal-back" onClick={closeReview}>
-            <div className="ob-modal wide" onClick={(e) => e.stopPropagation()}>
-              <button className="x" onClick={closeReview}>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-              </button>
-
-              <div className="m-kick">Review applicant</div>
-              <h3>{inf.profile?.fullName}</h3>
-              <p className="m-sub" style={{ marginBottom: 14 }}>
-                {st.label} · Applied {reviewing.appliedAt}
-              </p>
-
-              {/* Profile head */}
-              <div className="profile-head">
-                <div className="av">{inf.profile?.fullName?.charAt(0) || 'C'}</div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <h4>{inf.profile?.fullName}</h4>
-                  <div className="h">@{inf.profile?.instagram}</div>
-                  <div className="meta-row">
-                    <span><b style={{ color: 'var(--accent)' }}>{inf.profile?.followers}</b> followers</span>
-                    <span>·</span><span>{inf.profile?.niche}</span>
-                    {inf.profile?.city && <><span>·</span><span>{inf.profile.city}</span></>}
-                  </div>
-                  {inf.rating && (
-                    <div style={{ marginTop: 6 }}><Stars score={inf.rating.score} count={inf.rating.count} /></div>
-                  )}
-                </div>
-              </div>
-
-              {inf.profile?.bio && (
-                <div className="info-cell" style={{ marginBottom: 12 }}>
-                  <div className="l">Bio</div>
-                  <div className="v">{inf.profile.bio}</div>
-                </div>
-              )}
-
-              {reviewing.message && (
-                <div className="pitch-box">
-                  <div className="l">Their pitch</div>
-                  <div className="v">"{reviewing.message}"</div>
-                </div>
-              )}
-
-              {(reviewing.proposedPrice || reviewing.proposedNote) && (
-                <div className="pitch-box offer">
-                  <div className="l">Counter-offer</div>
-                  {reviewing.proposedPrice && (
-                    <div className="price">₹{Number(reviewing.proposedPrice).toLocaleString()}</div>
-                  )}
-                  {reviewing.proposedNote && <div className="v">{reviewing.proposedNote}</div>}
-                </div>
-              )}
-
-              {/* Negotiation thread */}
-              <div className="thread-section">
-                <div className="title">
-                  <span>Conversation</span>
-                  <span>{(reviewing.comments || []).length} message{(reviewing.comments || []).length !== 1 ? 's' : ''}</span>
-                </div>
-                <div className="thread">
-                  {(reviewing.comments || []).length === 0 ? (
-                    <div className="empty-thread">No messages yet — start the conversation below.</div>
-                  ) : (
-                    reviewing.comments.map((cm) => (
-                      <div key={cm.id} className={'bubble' + (cm.authorId === user?.id ? ' mine' : '')}>
-                        <div className="who">{cm.authorName || (cm.authorRole === 'owner' ? 'Brand' : 'Creator')}</div>
-                        <div className="body">{cm.body}</div>
-                        <div className="at">{formatDateTime(cm.createdAt)}</div>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="reply">
-                  <textarea
-                    rows={2}
-                    placeholder="Type a message…"
-                    value={reply}
-                    onChange={(e) => setReply(e.target.value)}
-                  />
-                  <button className="btn-solid btn-sm" onClick={handlePostReply} disabled={posting || !reply.trim()}>
-                    {posting ? '…' : 'Send'}
-                  </button>
-                </div>
-              </div>
-
-              {errorMsg && <div className="alert warn" style={{ marginTop: 12 }}>{errorMsg}</div>}
-
-              {/* Decision */}
-              {reviewing.status === 'pending' && (
-                <>
-                  {blockedByOther && (
-                    <div className="alert warn" style={{ marginTop: 12 }}>
-                      Another creator is already assigned. Unassign them first to accept this applicant.
-                    </div>
-                  )}
-                  <div className="m-actions" style={{ marginTop: 12 }}>
-                    <button className="btn-danger" onClick={() => setConfirmReject(true)} disabled={acting}>
-                      Reject
-                    </button>
-                    <button className="btn-success" onClick={() => setConfirmAccept(true)} disabled={acting || blockedByOther}>
-                      Accept & assign
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {/* Inline confirms */}
-              {confirmAccept && (
-                <div className="confirm-banner acc" style={{ marginTop: 12 }}>
-                  <div className="ic">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
-                  </div>
-                  <h4>Accept {inf.profile?.fullName}?</h4>
-                  <p>This assigns them and rejects all other pending applications.</p>
-                  <div className="m-actions" style={{ marginTop: 12, justifyContent: 'center' }}>
-                    <button className="btn-line" onClick={() => setConfirmAccept(false)} disabled={acting}>Cancel</button>
-                    <button className="btn-success" onClick={handleAccept} disabled={acting}>
-                      {acting ? 'Saving…' : 'Confirm accept'}
-                    </button>
-                  </div>
-                </div>
-              )}
-              {confirmReject && (
-                <div className="confirm-banner rej" style={{ marginTop: 12 }}>
-                  <div className="ic">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
-                  </div>
-                  <h4>Reject {inf.profile?.fullName}?</h4>
-                  <p>They'll see they were not selected for this campaign.</p>
-                  <div className="m-actions" style={{ marginTop: 12, justifyContent: 'center' }}>
-                    <button className="btn-line" onClick={() => setConfirmReject(false)} disabled={acting}>Cancel</button>
-                    <button className="btn-danger" onClick={handleReject} disabled={acting}>
-                      {acting ? 'Saving…' : 'Confirm reject'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        );
-      })()}
 
       {/* ===================== UNASSIGN CONFIRM ===================== */}
       {confirmUnassign && (

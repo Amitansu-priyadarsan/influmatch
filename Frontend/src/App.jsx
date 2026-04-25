@@ -20,6 +20,7 @@ import OwnerOnboarding from './pages/owner/OwnerOnboarding';
 import OwnerCampaigns from './pages/owner/OwnerCampaigns';
 import OwnerApplicantsOverview from './pages/owner/OwnerApplicantsOverview';
 import OwnerApplicants from './pages/owner/OwnerApplicants';
+import OwnerApplicantReview from './pages/owner/OwnerApplicantReview';
 
 // Influencer
 import InfluencerOnboarding from './pages/influencer/InfluencerOnboarding';
@@ -104,6 +105,9 @@ function AppRoutes() {
       } />
       <Route path="/owner/applicants/:campaignId" element={
         <ProtectedRoute allowedRole="owner"><OwnerApplicants /></ProtectedRoute>
+      } />
+      <Route path="/owner/applicants/:campaignId/:influencerId" element={
+        <ProtectedRoute allowedRole="owner"><OwnerApplicantReview /></ProtectedRoute>
       } />
 
       {/* Influencer Routes */}
