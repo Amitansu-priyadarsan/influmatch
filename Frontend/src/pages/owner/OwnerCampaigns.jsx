@@ -2,348 +2,334 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import OwnerLayout from '../../components/layouts/OwnerLayout';
-import Modal from '../../components/ui/Modal';
-import Input from '../../components/ui/Input';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import { Plus, Megaphone, Users, ChevronDown, Clock, Eye } from 'lucide-react';
+
+const CAMP_CSS = `
+.ob-camp .head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:26px;flex-wrap:wrap}
+.ob-camp .head h1{font-weight:600;font-size:clamp(28px,3vw,38px);line-height:1.1;letter-spacing:-.02em;margin:0;color:var(--fg)}
+.ob-camp .head .sub{color:var(--fg-dim);font-size:14px;margin-top:6px}
+
+.ob-camp .filters{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.ob-camp .filter{padding:7px 14px;border-radius:8px;border:1px solid var(--line-2);background:var(--surface-1);font-size:12.5px;color:var(--fg-dim);cursor:pointer;transition:.15s;font-weight:500}
+.ob-camp .filter:hover{color:var(--fg)}
+.ob-camp .filter.active{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.ob-camp .filter b{margin-left:6px;font-weight:600}
+
+.ob-camp .grid{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
+
+.ob-camp .card{border:1px solid var(--line);border-radius:12px;background:var(--bg-2);padding:20px;transition:.15s;display:flex;flex-direction:column}
+.ob-camp .card:hover{border-color:var(--line-2)}
+.ob-camp .card .row1{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px;gap:12px}
+.ob-camp .card .logo{width:40px;height:40px;border-radius:9px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent-border);display:grid;place-items:center;font-weight:600;font-size:15px;flex:none}
+.ob-camp .card .pill{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;padding:5px 10px;border:1px solid var(--line-2);border-radius:999px;color:var(--fg-dim)}
+.ob-camp .card .pill.open{color:var(--accent);border-color:var(--accent-border);background:var(--accent-soft)}
+.ob-camp .card .pill.active{color:var(--accent);border-color:var(--accent);background:var(--accent-soft)}
+.ob-camp .card .pill.submitted{color:#7ee8a3;border-color:rgba(126,232,163,.45);background:rgba(126,232,163,.08)}
+.ob-camp .card h3{font-weight:600;font-size:18px;letter-spacing:-.01em;margin:0 0 4px;color:var(--fg)}
+.ob-camp .card .brand{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-mute);margin-bottom:12px}
+.ob-camp .card .offer{color:var(--fg-dim);font-size:13.5px;line-height:1.55;margin:0 0 14px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.ob-camp .card .meta{display:flex;flex-wrap:wrap;gap:14px;font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;color:var(--fg-dim);padding:12px 0;border-top:1px solid var(--line);margin-bottom:14px}
+.ob-camp .card .meta .k{color:var(--fg-mute);text-transform:uppercase;margin-right:6px}
+.ob-camp .card .meta .code{color:var(--accent)}
+.ob-camp .card .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.ob-camp .card .stats .s{padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-faint)}
+.ob-camp .card .stats .s .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-mute);margin-bottom:4px}
+.ob-camp .card .stats .s .v{font-weight:600;font-size:16px;color:var(--fg)}
+.ob-camp .card .stats .s .v.pending{color:#ffb86b}
+.ob-camp .card .stats .s .v.acc{color:var(--accent)}
+.ob-camp .card .assigned{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-faint);margin-bottom:14px}
+.ob-camp .card .assigned .av{width:28px;height:28px;border-radius:8px;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:600;font-size:12px}
+.ob-camp .card .assigned .who{flex:1;min-width:0}
+.ob-camp .card .assigned .who b{display:block;font-size:13px;font-weight:600;color:var(--fg);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ob-camp .card .assigned .who span{display:block;font-size:11px;color:var(--fg-mute);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ob-camp .card .actions{margin-top:auto;display:flex;gap:8px}
+.ob-camp .card .actions .btn{flex:1;justify-content:center}
+
+.ob-camp .empty{padding:80px 24px;border:1px dashed var(--line-2);border-radius:12px;text-align:center;background:var(--surface-faint)}
+.ob-camp .empty p{color:var(--fg-dim);margin:0 0 16px;font-size:14px}
+
+@media (max-width:900px){
+  .ob-camp .grid{grid-template-columns:1fr}
+}
+`;
+
+if (typeof document !== 'undefined' && !document.getElementById('ob-camp-styles')) {
+  const tag = document.createElement('style');
+  tag.id = 'ob-camp-styles';
+  tag.textContent = CAMP_CSS;
+  document.head.appendChild(tag);
+}
 
 export default function OwnerCampaigns() {
-    const { user, campaigns, influencers, createCampaign, assignInfluencer } = useAuth();
-    const navigate = useNavigate();
-    const [isCreateOpen, setIsCreateOpen] = useState(false);
-    const [assignOpen, setAssignOpen] = useState(null);
-    const [form, setForm] = useState({ title: '', offer: '', promoCode: '', startDate: '', endDate: '' });
-    const [errors, setErrors] = useState({});
-    const [success, setSuccess] = useState('');
+  const { user, campaigns, influencers, createCampaign, assignInfluencer } = useAuth();
+  const navigate = useNavigate();
+  const [createOpen, setCreateOpen] = useState(false);
+  const [assignOpen, setAssignOpen] = useState(null);
+  const [form, setForm] = useState({ title: '', offer: '', promoCode: '', startDate: '', endDate: '' });
+  const [errors, setErrors] = useState({});
+  const [success, setSuccess] = useState('');
+  const [filter, setFilter] = useState('all');
 
-    const myCampaigns = campaigns.filter(c => c.ownerId === user.id);
-    const onboardedInfluencers = influencers.filter(i => i.onboarded);
+  const myCampaigns = campaigns.filter((c) => c.ownerId === user.id);
+  const onboardedInfluencers = influencers.filter((i) => i.onboarded);
 
-    const validate = () => {
-        const e = {};
-        if (!form.title) e.title = 'Title is required';
-        if (!form.offer) e.offer = 'Offer description is required';
-        if (!form.promoCode) e.promoCode = 'Promo code is required';
-        if (!form.startDate) e.startDate = 'Required';
-        if (!form.endDate) e.endDate = 'Required';
-        setErrors(e);
-        return Object.keys(e).length === 0;
-    };
+  const counts = {
+    all: myCampaigns.length,
+    open: myCampaigns.filter((c) => c.status === 'open').length,
+    active: myCampaigns.filter((c) => c.status === 'active').length,
+    submitted: myCampaigns.filter((c) => c.submittedPost).length,
+  };
 
-    const handleCreate = (e) => {
-        e.preventDefault();
-        if (!validate()) return;
-        createCampaign(form);
-        setSuccess('Campaign created!');
-        setTimeout(() => {
-            setIsCreateOpen(false);
-            setForm({ title: '', offer: '', promoCode: '', startDate: '', endDate: '' });
-            setSuccess('');
-        }, 1200);
-    };
+  const filtered = myCampaigns.filter((c) => {
+    if (filter === 'all') return true;
+    if (filter === 'submitted') return !!c.submittedPost;
+    return c.status === filter;
+  });
 
-    const handleAssign = (campaignId, influencerId) => {
-        assignInfluencer(campaignId, influencerId);
-        setAssignOpen(null);
-    };
+  const validate = () => {
+    const e = {};
+    if (!form.title) e.title = 'Title is required';
+    if (!form.offer) e.offer = 'Offer description is required';
+    if (!form.promoCode) e.promoCode = 'Promo code is required';
+    if (!form.startDate) e.startDate = 'Required';
+    if (!form.endDate) e.endDate = 'Required';
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
-    return (
-        <OwnerLayout>
-            <div className="max-w-7xl mx-auto">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
-                    <div>
-                        <h1 className="text-2xl md:text-3xl font-bold theme-text mb-1">My Campaigns</h1>
-                        <p className="theme-text-muted text-sm">{myCampaigns.length} campaigns for {user.business}</p>
+  const handleCreate = (e) => {
+    e.preventDefault();
+    if (!validate()) return;
+    createCampaign(form);
+    setSuccess('Campaign created');
+    setTimeout(() => {
+      setCreateOpen(false);
+      setForm({ title: '', offer: '', promoCode: '', startDate: '', endDate: '' });
+      setSuccess('');
+    }, 1100);
+  };
+
+  const handleAssign = (campaignId, influencerId) => {
+    assignInfluencer(campaignId, influencerId);
+    setAssignOpen(null);
+  };
+
+  const closeCreate = () => {
+    setCreateOpen(false);
+    setErrors({});
+    setSuccess('');
+  };
+
+  return (
+    <OwnerLayout title="My Campaigns">
+      <div className="ob-camp">
+        <div className="head">
+          <div>
+            <h1>My campaigns</h1>
+            <div className="sub">{myCampaigns.length} campaign{myCampaigns.length !== 1 ? 's' : ''} for {user.business}</div>
+          </div>
+          <button className="btn-solid" onClick={() => setCreateOpen(true)}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 5v14M5 12h14"/></svg>
+            New campaign
+          </button>
+        </div>
+
+        {myCampaigns.length > 0 && (
+          <div className="filters">
+            {['all', 'open', 'active', 'submitted'].map((k) => (
+              <button key={k} className={'filter' + (filter === k ? ' active' : '')} onClick={() => setFilter(k)}>
+                {k.charAt(0).toUpperCase() + k.slice(1)}
+                <b>{counts[k]}</b>
+              </button>
+            ))}
+          </div>
+        )}
+
+        {myCampaigns.length === 0 ? (
+          <div className="empty">
+            <p>No campaigns yet. Create one and start receiving applications from creators.</p>
+            <button className="btn-solid" onClick={() => setCreateOpen(true)}>Create your first campaign</button>
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="empty">
+            <p>No campaigns match this filter.</p>
+          </div>
+        ) : (
+          <div className="grid">
+            {filtered.map((c) => {
+              const inf = influencers.find((i) => i.id === c.assignedInfluencer);
+              const apps = c.applications || [];
+              const pendingCount = apps.filter((a) => a.status === 'pending').length;
+              const acceptedCount = apps.filter((a) => a.status === 'accepted').length;
+              const statusClass = c.submittedPost ? 'submitted' : c.status === 'active' ? 'active' : 'open';
+              const statusLabel = c.submittedPost ? 'Submitted' : c.status;
+
+              return (
+                <div key={c.id} className="card">
+                  <div className="row1">
+                    <div className="logo">{(c.brand || 'B').charAt(0)}</div>
+                    <span className={'pill ' + statusClass}>{statusLabel}</span>
+                  </div>
+                  <h3>{c.title}</h3>
+                  <div className="brand">{c.brand}</div>
+                  <p className="offer">{c.offer}</p>
+                  <div className="meta">
+                    <span><span className="k">Code</span><span className="code">{c.promoCode}</span></span>
+                    <span><span className="k">Window</span>{c.startDate} → {c.endDate}</span>
+                  </div>
+
+                  <div className="stats">
+                    <div className="s"><div className="l">Applicants</div><div className="v">{apps.length}</div></div>
+                    <div className="s"><div className="l">Pending</div><div className="v pending">{pendingCount}</div></div>
+                    <div className="s"><div className="l">Accepted</div><div className="v acc">{acceptedCount}</div></div>
+                  </div>
+
+                  {inf ? (
+                    <div className="assigned">
+                      <div className="av">{(inf.profile?.fullName || 'I').charAt(0)}</div>
+                      <div className="who">
+                        <b>{inf.profile?.fullName || inf.email}</b>
+                        <span>@{inf.profile?.instagram} · {inf.profile?.followers}</span>
+                      </div>
                     </div>
-                    <Button onClick={() => setIsCreateOpen(true)} className="self-start sm:self-auto">
-                        <Plus size={16} />
-                        New Campaign
-                    </Button>
+                  ) : null}
+
+                  <div className="actions">
+                    <button className="btn-line" onClick={() => navigate(`/owner/applicants/${c.id}`)}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
+                      Applicants ({apps.length})
+                    </button>
+                    <button className="btn-line" onClick={() => setAssignOpen(c.id)}>
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M19 8v6M16 11h6"/></svg>
+                      {inf ? 'Reassign' : 'Assign'}
+                    </button>
+                  </div>
                 </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
 
-                {myCampaigns.length === 0 ? (
-                    <div className="text-center py-20 theme-bg-elevated border theme-border-subtle rounded-2xl">
-                        <div className="w-16 h-16 rounded-2xl theme-bg-elevated flex items-center justify-center mx-auto mb-4">
-                            <Megaphone size={28} className="theme-text-faint" />
-                        </div>
-                        <p className="theme-text-muted font-medium mb-2">No campaigns yet</p>
-                        <p className="theme-text-faint text-sm mb-6">Create your first campaign and assign an influencer</p>
-                        <Button onClick={() => setIsCreateOpen(true)}>
-                            <Plus size={16} />
-                            Create Campaign
-                        </Button>
+      {/* Create Campaign Modal */}
+      {createOpen && (
+        <div className="ob-modal-back" onClick={closeCreate}>
+          <div className="ob-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="x" onClick={closeCreate} aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+
+            {success ? (
+              <div className="ok-state">
+                <div className="tick">
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                </div>
+                <h4>{success}</h4>
+                <p>Your campaign is live and creators can start applying.</p>
+              </div>
+            ) : (
+              <>
+                <div className="m-kick">New campaign</div>
+                <h3>Create a campaign</h3>
+                <p className="m-sub">Define your offer and deliverables. Creators will see this and apply.</p>
+
+                <form onSubmit={handleCreate}>
+                  <div className="fld">
+                    <label>Campaign title</label>
+                    <input type="text" placeholder="e.g. Summer Brew Special"
+                      value={form.title}
+                      onChange={(e) => setForm({ ...form, title: e.target.value })} />
+                    {errors.title && <div className="err">{errors.title}</div>}
+                  </div>
+
+                  <div className="fld">
+                    <label>Offer description</label>
+                    <textarea placeholder="e.g. 1 free coffee + 20% off for all followers"
+                      value={form.offer}
+                      onChange={(e) => setForm({ ...form, offer: e.target.value })} />
+                    {errors.offer && <div className="err">{errors.offer}</div>}
+                  </div>
+
+                  <div className="fld">
+                    <label>Promo code</label>
+                    <input type="text" placeholder="e.g. BREW20"
+                      value={form.promoCode}
+                      onChange={(e) => setForm({ ...form, promoCode: e.target.value.toUpperCase() })} />
+                    {errors.promoCode && <div className="err">{errors.promoCode}</div>}
+                  </div>
+
+                  <div className="row2">
+                    <div className="fld">
+                      <label>Start date</label>
+                      <input type="date" value={form.startDate}
+                        onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
+                      {errors.startDate && <div className="err">{errors.startDate}</div>}
                     </div>
-                ) : (
-                    <>
-                    {/* Mobile card view */}
-                    <div className="md:hidden flex flex-col gap-3">
-                        {myCampaigns.map((c) => {
-                            const inf = influencers.find(i => i.id === c.assignedInfluencer);
-                            const apps = c.applications || [];
-                            const pendingCount = apps.filter(a => a.status === 'pending').length;
-                            return (
-                                <div key={c.id} className="theme-bg-elevated border theme-border-elevated rounded-2xl p-4">
-                                    <div className="flex items-start justify-between gap-3 mb-3">
-                                        <div className="min-w-0">
-                                            <p className="theme-text font-semibold truncate">{c.title}</p>
-                                            <p className="theme-text-icon text-sm">{c.brand}</p>
-                                        </div>
-                                        <Badge variant={c.status === 'submitted' ? 'submitted' : c.status === 'open' ? 'info' : 'active'}>
-                                            {c.status}
-                                        </Badge>
-                                    </div>
-
-                                    <p className="theme-text-secondary text-sm mb-2 line-clamp-2">{c.offer}</p>
-
-                                    <div className="flex flex-wrap items-center gap-2 mb-3 text-xs">
-                                        <code className="theme-promo px-2 py-0.5 rounded-md font-mono">{c.promoCode}</code>
-                                        <span className="theme-text-muted whitespace-nowrap">{c.startDate} → {c.endDate}</span>
-                                    </div>
-
-                                    <div className="flex flex-wrap items-center gap-3 mb-3 text-sm">
-                                        <button
-                                            onClick={() => navigate(`/owner/applicants/${c.id}`)}
-                                            className="flex items-center gap-1.5 theme-text-muted"
-                                        >
-                                            <Users size={13} />
-                                            <span className="theme-text font-medium">{apps.length}</span> applicants
-                                            {pendingCount > 0 && (
-                                                <span className="flex items-center gap-1 bg-amber-500/20 text-amber-300 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-                                                    <Clock size={9} />
-                                                    {pendingCount} new
-                                                </span>
-                                            )}
-                                        </button>
-                                        {inf ? (
-                                            <div className="flex items-center gap-1.5">
-                                                <div className="w-5 h-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-[9px] font-bold">
-                                                    {inf.profile?.fullName?.charAt(0) || 'I'}
-                                                </div>
-                                                <span className="theme-text-secondary text-sm">{inf.profile?.fullName || inf.email}</span>
-                                            </div>
-                                        ) : (
-                                            <span className="theme-text-faint text-xs italic">Unassigned</span>
-                                        )}
-                                    </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() => navigate(`/owner/applicants/${c.id}`)}
-                                            className="inline-flex items-center gap-1.5 text-xs py-1.5 px-3 flex-1"
-                                        >
-                                            <Eye size={12} />
-                                            Applicants
-                                        </Button>
-                                        <Button
-                                            variant="secondary"
-                                            onClick={() => setAssignOpen(c.id)}
-                                            className="inline-flex items-center gap-1.5 text-xs py-1.5 px-3 flex-1"
-                                        >
-                                            <Users size={12} />
-                                            {inf ? 'Reassign' : 'Assign'}
-                                        </Button>
-                                    </div>
-                                </div>
-                            );
-                        })}
+                    <div className="fld">
+                      <label>End date</label>
+                      <input type="date" value={form.endDate}
+                        onChange={(e) => setForm({ ...form, endDate: e.target.value })} />
+                      {errors.endDate && <div className="err">{errors.endDate}</div>}
                     </div>
+                  </div>
 
-                    {/* Desktop table view */}
-                    <div className="hidden md:block overflow-x-auto">
-                        <table className="w-full border-separate border-spacing-y-3">
-                            <thead>
-                                <tr className="theme-text-icon text-xs uppercase tracking-wider text-left">
-                                    <th className="px-6 py-2 font-medium">Campaign</th>
-                                    <th className="px-6 py-2 font-medium">Offer</th>
-                                    <th className="px-6 py-2 font-medium">Promo</th>
-                                    <th className="px-6 py-2 font-medium">Dates</th>
-                                    <th className="px-6 py-2 font-medium">Applicants</th>
-                                    <th className="px-6 py-2 font-medium">Influencer</th>
-                                    <th className="px-6 py-2 font-medium">Status</th>
-                                    <th className="px-6 py-2 font-medium text-right">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {myCampaigns.map((c) => {
-                                    const inf = influencers.find(i => i.id === c.assignedInfluencer);
-                                    const apps = c.applications || [];
-                                    const pendingCount = apps.filter(a => a.status === 'pending').length;
-                                    return (
-                                        <tr key={c.id} className="theme-bg-elevated border theme-border-elevated rounded-2xl hover:theme-bg-elevated-hover transition-all group">
-                                            <td className="px-6 py-4 rounded-l-2xl">
-                                                <div className="flex flex-col">
-                                                    <span className="theme-text font-semibold">{c.title}</span>
-                                                    <span className="theme-text-icon text-sm">{c.brand}</span>
-                                                </div>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <p className="theme-text-secondary text-sm max-w-[150px] truncate" title={c.offer}>{c.offer}</p>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <code className="theme-promo px-2 py-0.5 rounded-md font-mono text-xs">{c.promoCode}</code>
-                                            </td>
-                                            <td className="px-6 py-4 theme-text-muted text-xs whitespace-nowrap">
-                                                {c.startDate} → {c.endDate}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <button
-                                                    onClick={() => navigate(`/owner/applicants/${c.id}`)}
-                                                    className="flex items-center gap-2 hover:theme-bg-elevated rounded-lg px-2 py-1 -mx-2 transition-colors"
-                                                >
-                                                    <span className="theme-text font-medium text-sm">{apps.length}</span>
-                                                    {pendingCount > 0 && (
-                                                        <span className="flex items-center gap-1 bg-amber-500/20 text-amber-300 text-[10px] font-medium px-1.5 py-0.5 rounded-full">
-                                                            <Clock size={9} />
-                                                            {pendingCount} new
-                                                        </span>
-                                                    )}
-                                                </button>
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                {inf ? (
-                                                    <div className="flex items-center gap-2">
-                                                        <div className="w-6 h-6 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white text-[10px] font-bold">
-                                                            {inf.profile?.fullName?.charAt(0) || 'I'}
-                                                        </div>
-                                                        <span className="theme-text-secondary text-sm whitespace-nowrap">{inf.profile?.fullName || inf.email}</span>
-                                                    </div>
-                                                ) : (
-                                                    <span className="theme-text-faint text-xs italic">Unassigned</span>
-                                                )}
-                                            </td>
-                                            <td className="px-6 py-4">
-                                                <Badge variant={c.status === 'submitted' ? 'submitted' : c.status === 'open' ? 'info' : 'active'}>
-                                                    {c.status}
-                                                </Badge>
-                                            </td>
-                                            <td className="px-6 py-4 rounded-r-2xl text-right">
-                                                <div className="flex items-center justify-end gap-2">
-                                                    <Button
-                                                        variant="secondary"
-                                                        onClick={() => navigate(`/owner/applicants/${c.id}`)}
-                                                        className="inline-flex items-center gap-1.5 text-xs py-1.5 px-3"
-                                                    >
-                                                        <Eye size={12} />
-                                                        Applicants
-                                                    </Button>
-                                                    <Button
-                                                        variant="secondary"
-                                                        onClick={() => setAssignOpen(c.id)}
-                                                        className="inline-flex items-center gap-1.5 text-xs py-1.5 px-3"
-                                                    >
-                                                        <Users size={12} />
-                                                        {inf ? 'Reassign' : 'Assign'}
-                                                    </Button>
-                                                </div>
-                                            </td>
-                                        </tr>
-                                    );
-                                })}
-                            </tbody>
-                        </table>
+                  <div className="m-actions">
+                    <button type="button" className="btn-line" onClick={closeCreate}>Cancel</button>
+                    <button type="submit" className="btn-solid">Create campaign →</button>
+                  </div>
+                </form>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Assign Influencer Modal */}
+      {assignOpen && (
+        <div className="ob-modal-back" onClick={() => setAssignOpen(null)}>
+          <div className="ob-modal" onClick={(e) => e.stopPropagation()} style={{ maxWidth: 460 }}>
+            <button className="x" onClick={() => setAssignOpen(null)} aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+            <div className="m-kick">Assign creator</div>
+            <h3>Pick an influencer</h3>
+            <p className="m-sub">Skip the application queue and assign someone directly.</p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 6, maxHeight: 380, overflow: 'auto', margin: '0 -6px' }}>
+              {onboardedInfluencers.length === 0 ? (
+                <p style={{ color: 'var(--fg-mute)', fontSize: 13, textAlign: 'center', padding: 24 }}>
+                  No onboarded creators yet.
+                </p>
+              ) : (
+                onboardedInfluencers.map((i) => (
+                  <button key={i.id}
+                    onClick={() => handleAssign(assignOpen, i.id)}
+                    style={{
+                      width: '100%', display: 'flex', alignItems: 'center', gap: 12,
+                      padding: '12px 14px', borderRadius: 10, border: '1px solid var(--line)',
+                      background: 'var(--surface-faint)', textAlign: 'left', cursor: 'pointer',
+                      transition: '.15s', color: 'var(--fg)'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.borderColor = 'var(--accent-border)'; e.currentTarget.style.background = 'var(--accent-soft)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.borderColor = 'var(--line)'; e.currentTarget.style.background = 'var(--surface-faint)'; }}
+                  >
+                    <div style={{
+                      width: 36, height: 36, borderRadius: 9, background: 'var(--accent)',
+                      color: 'var(--accent-ink)', display: 'grid', placeItems: 'center', fontWeight: 600
+                    }}>{i.profile?.fullName?.charAt(0)}</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: 13.5 }}>{i.profile?.fullName}</div>
+                      <div style={{ fontSize: 11.5, color: 'var(--fg-mute)', marginTop: 2 }}>
+                        @{i.profile?.instagram} · {i.profile?.followers}
+                      </div>
                     </div>
-                    </>
-                )}
+                    <span style={{ color: 'var(--accent)' }}>→</span>
+                  </button>
+                ))
+              )}
             </div>
-
-            {/* Create Campaign Modal */}
-            <Modal isOpen={isCreateOpen} onClose={() => setIsCreateOpen(false)} title="Create Campaign" maxWidth="max-w-2xl">
-                {success ? (
-                    <div className="text-center py-8">
-                        <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mx-auto mb-3">
-                            <span className="text-emerald-400 text-xl">✓</span>
-                        </div>
-                        <p className="theme-text font-medium">{success}</p>
-                    </div>
-                ) : (
-                    <form onSubmit={handleCreate} className="flex flex-col gap-4">
-                        <Input
-                            label="Campaign Title"
-                            placeholder="e.g. Summer Brew Special"
-                            error={errors.title}
-                            value={form.title}
-                            onChange={(e) => setForm({ ...form, title: e.target.value })}
-                        />
-                        <div className="flex flex-col gap-1.5">
-                            <label className="text-sm font-medium theme-text-secondary">Offer Description</label>
-                            <textarea
-                                placeholder="e.g. 1 Free Coffee + 20% discount for all followers"
-                                value={form.offer}
-                                onChange={(e) => setForm({ ...form, offer: e.target.value })}
-                                rows={3}
-                                className="w-full theme-bg-elevated border theme-border theme-text placeholder:theme-text-faint rounded-xl px-4 py-3 text-sm outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition-all resize-none"
-                            />
-                            {errors.offer && <p className="text-red-400 text-xs">{errors.offer}</p>}
-                        </div>
-                        <Input
-                            label="Promo Code"
-                            placeholder="e.g. BREW20"
-                            error={errors.promoCode}
-                            value={form.promoCode}
-                            onChange={(e) => setForm({ ...form, promoCode: e.target.value.toUpperCase() })}
-                        />
-                        <div className="grid grid-cols-2 gap-3">
-                            <Input
-                                label="Start Date"
-                                type="date"
-                                error={errors.startDate}
-                                value={form.startDate}
-                                onChange={(e) => setForm({ ...form, startDate: e.target.value })}
-                            />
-                            <Input
-                                label="End Date"
-                                type="date"
-                                error={errors.endDate}
-                                value={form.endDate}
-                                onChange={(e) => setForm({ ...form, endDate: e.target.value })}
-                            />
-                        </div>
-                        <div className="flex gap-3 mt-1">
-                            <Button variant="secondary" onClick={() => setIsCreateOpen(false)} className="flex-1">
-                                Cancel
-                            </Button>
-                            <Button type="submit" variant="primary" className="flex-1">
-                                Create Campaign
-                            </Button>
-                        </div>
-                    </form>
-                )}
-            </Modal>
-
-            {/* Assign Influencer Modal */}
-            <Modal
-                isOpen={!!assignOpen}
-                onClose={() => setAssignOpen(null)}
-                title="Assign Influencer"
-                maxWidth="max-w-md"
-            >
-                <div className="flex flex-col gap-1">
-                    {onboardedInfluencers.length === 0 ? (
-                        <p className="theme-text-icon text-sm p-4 text-center">No onboarded influencers available</p>
-                    ) : (
-                        onboardedInfluencers.map((i) => (
-                            <button
-                                key={i.id}
-                                onClick={() => handleAssign(assignOpen, i.id)}
-                                className="w-full flex items-center gap-4 p-4 hover:theme-bg-elevated transition-all text-left rounded-xl group"
-                            >
-                                <div className="w-10 h-10 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center text-white font-bold flex-shrink-0 shadow-lg group-hover:shadow-violet-500/20">
-                                    {i.profile?.fullName?.charAt(0)}
-                                </div>
-                                <div className="flex-1 min-w-0">
-                                    <p className="theme-text font-medium truncate">{i.profile?.fullName}</p>
-                                    <p className="theme-text-icon text-xs truncate">@{i.profile?.instagram} · {i.profile?.followers}</p>
-                                </div>
-                                <div className="text-violet-400 group-hover:translate-x-1 transition-transform">
-                                    <ChevronDown size={18} className="-rotate-90" />
-                                </div>
-                            </button>
-                        ))
-                    )}
-                </div>
-            </Modal>
-        </OwnerLayout>
-    );
+          </div>
+        </div>
+      )}
+    </OwnerLayout>
+  );
 }
