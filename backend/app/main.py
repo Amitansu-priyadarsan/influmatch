@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
-from .routers import auth, campaigns, onboarding, session
+from .routers import auth, campaigns, comments, onboarding, ratings, session
 
 app = FastAPI(title="InfluMatch API", version="0.1.0")
 
@@ -27,3 +27,5 @@ app.include_router(session.router, prefix=API_PREFIX)
 app.include_router(auth.router, prefix=API_PREFIX)
 app.include_router(onboarding.router, prefix=API_PREFIX)
 app.include_router(campaigns.router, prefix=API_PREFIX)
+app.include_router(comments.router, prefix=API_PREFIX)
+app.include_router(ratings.router, prefix=API_PREFIX)

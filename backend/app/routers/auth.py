@@ -22,7 +22,7 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 
 def _hydrate_user(user_row: dict) -> UserResponse:
-    """Attach the role-specific profile to the user response."""
+    """Attach the role-specific profile + cached rating to the user response."""
     sb = get_supabase()
     profile = None
     business = None
@@ -72,6 +72,28 @@ def _hydrate_user(user_row: dict) -> UserResponse:
                 "description": p.get("description"),
             }
 
+    # Pull cached rating off the user row itself; if it's missing (e.g. row
+    # came from a partial select), look it up.
+    if "rating_score" in user_row or "rating_count" in user_row:
+        score = user_row.get("rating_score")
+        count = user_row.get("rating_count") or 0
+    else:
+        r = (
+            sb.table("app_users")
+            .select("rating_score, rating_count")
+            .eq("id", user_row["id"])
+            .limit(1)
+            .execute()
+            .data
+            or [{}]
+        )[0]
+        score = r.get("rating_score")
+        count = r.get("rating_count") or 0
+    rating = {
+        "score": float(score) if score is not None else None,
+        "count": count,
+    }
+
     return UserResponse(
         id=user_row["id"],
         email=user_row["email"],
@@ -79,6 +101,7 @@ def _hydrate_user(user_row: dict) -> UserResponse:
         onboarded=bool(user_row.get("onboarded")),
         profile=profile,
         business=business,
+        rating=rating,
     )
 
 

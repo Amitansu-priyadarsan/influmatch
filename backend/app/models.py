@@ -7,6 +7,7 @@ from pydantic import BaseModel, EmailStr, Field
 Role = Literal["influencer", "owner", "admin"]
 CampaignStatus = Literal["open", "active", "submitted", "closed"]
 AppStatus = Literal["pending", "accepted", "rejected"]
+CompensationType = Literal["cash", "barter", "mixed"]
 
 
 # ----- Auth -----
@@ -35,6 +36,11 @@ class SessionResponse(BaseModel):
 
 # ----- User -----
 
+class RatingSummary(BaseModel):
+    score: Optional[float] = None  # null until first rating
+    count: int = 0
+
+
 class UserResponse(BaseModel):
     id: str
     email: str
@@ -42,6 +48,7 @@ class UserResponse(BaseModel):
     onboarded: bool
     profile: Optional[dict[str, Any]] = None
     business: Optional[str] = None
+    rating: Optional[RatingSummary] = None
 
 
 class InfluencerListItem(BaseModel):
@@ -49,6 +56,7 @@ class InfluencerListItem(BaseModel):
     email: str
     onboarded: bool
     profile: Optional[dict[str, Any]] = None
+    rating: Optional[RatingSummary] = None
 
 
 # ----- Onboarding -----
@@ -81,24 +89,47 @@ class CampaignCreateRequest(BaseModel):
     title: str
     offer: str
     promoCode: str
-    startDate: str  # ISO date YYYY-MM-DD
+    startDate: str
     endDate: str
+    compensationType: CompensationType = "cash"
+    priceMin: Optional[int] = None
+    priceMax: Optional[int] = None
+    barterDescription: Optional[str] = ""
+    barterValue: Optional[int] = None
 
 
 class ApplyRequest(BaseModel):
     message: Optional[str] = ""
+    proposedPrice: Optional[int] = None
+    proposedNote: Optional[str] = ""
 
 
 class SubmitPostRequest(BaseModel):
     postLink: str
 
 
+class CommentRequest(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+
+
+class CommentItem(BaseModel):
+    id: str
+    authorId: str
+    authorRole: Optional[str] = None
+    authorName: Optional[str] = None
+    body: str
+    createdAt: str
+
+
 class ApplicationItem(BaseModel):
     influencerId: str
     status: AppStatus
     message: Optional[str] = None
+    proposedPrice: Optional[int] = None
+    proposedNote: Optional[str] = None
     appliedAt: str
-    creator: Optional[dict[str, Any]] = None  # influencer profile snapshot
+    creator: Optional[dict[str, Any]] = None
+    comments: Optional[list[CommentItem]] = None
 
 
 class CampaignItem(BaseModel):
@@ -113,7 +144,30 @@ class CampaignItem(BaseModel):
     status: CampaignStatus
     assignedInfluencer: Optional[str] = None
     submittedPost: Optional[str] = None
+    compensationType: CompensationType = "cash"
+    priceMin: Optional[int] = None
+    priceMax: Optional[int] = None
+    barterDescription: Optional[str] = None
+    barterValue: Optional[int] = None
     applications: list[ApplicationItem] = []
+
+
+# ----- Ratings -----
+
+class RatingRequest(BaseModel):
+    campaignId: str
+    score: int = Field(ge=1, le=5)
+    comment: Optional[str] = ""
+
+
+class RatingItem(BaseModel):
+    id: str
+    campaignId: str
+    fromUserId: str
+    toUserId: str
+    score: int
+    comment: Optional[str] = None
+    createdAt: str
 
 
 TokenResponse.model_rebuild()

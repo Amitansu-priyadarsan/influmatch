@@ -27,6 +27,7 @@ import InfluencerDashboard from './pages/influencer/InfluencerDashboard';
 import InfluencerBrowseCampaigns from './pages/influencer/InfluencerBrowseCampaigns';
 import InfluencerCampaigns from './pages/influencer/InfluencerCampaigns';
 import InfluencerProfile from './pages/influencer/InfluencerProfile';
+import InfluencerConversation from './pages/influencer/InfluencerConversation';
 
 function BootGate({ children }) {
   const { bootLoading } = useAuth();
@@ -120,6 +121,9 @@ function AppRoutes() {
       } />
       <Route path="/influencer/profile" element={
         <ProtectedRoute allowedRole="influencer"><InfluencerProfile /></ProtectedRoute>
+      } />
+      <Route path="/influencer/conversation/:campaignId" element={
+        <ProtectedRoute allowedRole="influencer"><InfluencerConversation /></ProtectedRoute>
       } />
 
       {/* Fallback */}

@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import InfluencerLayout from '../../components/layouts/InfluencerLayout';
 
@@ -61,12 +62,33 @@ if (typeof document !== 'undefined' && !document.getElementById('im-mine-styles'
 }
 
 export default function InfluencerCampaigns() {
-  const { user, campaigns, submitPost } = useAuth();
+  const { user, campaigns, submitPost, submitRating } = useAuth();
   const [submitFor, setSubmitFor] = useState(null);
   const [postLink, setPostLink] = useState('');
   const [error, setError] = useState('');
   const [okId, setOkId] = useState(null);
   const [filter, setFilter] = useState('all');
+  const [rateFor, setRateFor] = useState(null);
+  const [ratingScore, setRatingScore] = useState(5);
+  const [ratingComment, setRatingComment] = useState('');
+  const [ratingSubmitting, setRatingSubmitting] = useState(false);
+  const [ratingError, setRatingError] = useState('');
+  const navigate = useNavigate();
+
+  const handleSubmitRating = async () => {
+    setRatingSubmitting(true);
+    setRatingError('');
+    try {
+      await submitRating({ campaignId: rateFor, score: ratingScore, comment: ratingComment });
+      setRateFor(null);
+      setRatingScore(5);
+      setRatingComment('');
+    } catch (err) {
+      setRatingError(err.message || 'Could not submit rating');
+    } finally {
+      setRatingSubmitting(false);
+    }
+  };
 
   const mine = campaigns.filter((c) => c.assignedInfluencer === user.id);
 
@@ -155,6 +177,29 @@ export default function InfluencerCampaigns() {
                     <span><span className="k">Code</span><span className="code">{c.promoCode}</span></span>
                     <span><span className="k">Window</span>{c.startDate} → {c.endDate}</span>
                   </div>
+                  {(() => {
+                    const myApp = (c.applications || []).find((a) => a.influencerId === user.id);
+                    const msgs = (myApp?.comments || []).length;
+                    return (
+                      <button
+                        type="button"
+                        onClick={() => navigate(`/influencer/conversation/${c.id}`)}
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 8,
+                          padding: '8px 12px', marginBottom: 12,
+                          border: '1px solid var(--accent-border)',
+                          background: 'var(--accent-soft)',
+                          borderRadius: 8, color: 'var(--accent)',
+                          fontFamily: 'var(--mono)', fontSize: 11, letterSpacing: '.08em',
+                          textTransform: 'uppercase', cursor: 'pointer',
+                          alignSelf: 'flex-start',
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                        Messages {msgs > 0 ? `· ${msgs}` : ''} →
+                      </button>
+                    );
+                  })()}
                   <div className="foot">
                     {done ? (
                       <>
@@ -162,7 +207,9 @@ export default function InfluencerCampaigns() {
                           View post
                           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M7 17L17 7M9 7h8v8"/></svg>
                         </a>
-                        <span className="waiting">Awaiting approval</span>
+                        <button className="btn btn-solid" onClick={() => { setRateFor(c.id); setRatingScore(5); setRatingComment(''); setRatingError(''); }}>
+                          Rate brand ★
+                        </button>
                       </>
                     ) : (
                       <>
@@ -218,6 +265,55 @@ export default function InfluencerCampaigns() {
           </div>
         </div>
       )}
+
+      {rateFor && (
+        <div className="im-modal-back" onClick={() => setRateFor(null)}>
+          <div className="im-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="x" onClick={() => setRateFor(null)} aria-label="Close">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg>
+            </button>
+
+            <div className="m-kick">After-deal feedback</div>
+            <h3>Rate this <em>brand.</em></h3>
+            <div className="m-brand" style={{ marginBottom: 18 }}>
+              How was working with them? Your feedback helps other creators.
+            </div>
+
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', marginBottom: 18 }}>
+              {[1, 2, 3, 4, 5].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => setRatingScore(n)}
+                  style={{
+                    width: 48, height: 48, borderRadius: 12,
+                    border: '1px solid ' + (ratingScore >= n ? 'var(--accent)' : 'var(--line-2)'),
+                    background: ratingScore >= n ? 'var(--accent-soft)' : 'var(--surface-1)',
+                    color: ratingScore >= n ? 'var(--accent)' : 'var(--fg-mute)',
+                    fontSize: 24, lineHeight: 1, cursor: 'pointer',
+                  }}
+                >★</button>
+              ))}
+            </div>
+
+            <div className="fld">
+              <label>Comment <span className="opt">— optional</span></label>
+              <textarea placeholder="Brief paid promptly, clear with deliverables, would work with again."
+                value={ratingComment}
+                onChange={(e) => setRatingComment(e.target.value)} />
+              {ratingError && <div className="err">{ratingError}</div>}
+            </div>
+
+            <div className="m-actions">
+              <button className="btn btn-line" onClick={() => setRateFor(null)}>Cancel</button>
+              <button className="btn btn-solid" onClick={handleSubmitRating} disabled={ratingSubmitting}>
+                {ratingSubmitting ? 'Saving…' : 'Submit rating →'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
     </InfluencerLayout>
   );
 }

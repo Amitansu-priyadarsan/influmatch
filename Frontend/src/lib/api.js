@@ -95,17 +95,32 @@ export const api = {
     // Campaigns
     listCampaigns: () => request('/campaigns'),
     createCampaign: (payload) => request('/campaigns', { method: 'POST', body: payload }),
-    applyToCampaign: (campaignId, message) =>
-        request(`/campaigns/${campaignId}/apply`, { method: 'POST', body: { message } }),
+    applyToCampaign: (campaignId, payload) =>
+        request(`/campaigns/${campaignId}/apply`, { method: 'POST', body: payload }),
     acceptApplication: (campaignId, influencerId) =>
         request(`/campaigns/${campaignId}/accept/${influencerId}`, { method: 'POST' }),
     rejectApplication: (campaignId, influencerId) =>
         request(`/campaigns/${campaignId}/reject/${influencerId}`, { method: 'POST' }),
     assignInfluencer: (campaignId, influencerId) =>
         request(`/campaigns/${campaignId}/assign/${influencerId}`, { method: 'POST' }),
+    unassignInfluencer: (campaignId) =>
+        request(`/campaigns/${campaignId}/unassign`, { method: 'POST' }),
     submitPost: (campaignId, postLink) =>
         request(`/campaigns/${campaignId}/submit-post`, { method: 'POST', body: { postLink } }),
     listInfluencers: () => request('/influencers'),
+
+    // Comments (negotiation thread)
+    listComments: (campaignId, influencerId) =>
+        request(`/applications/${campaignId}/${influencerId}/comments`),
+    postComment: (campaignId, influencerId, body) =>
+        request(`/applications/${campaignId}/${influencerId}/comments`, {
+            method: 'POST', body: { body },
+        }),
+
+    // Ratings
+    submitRating: (payload) => request('/ratings', { method: 'POST', body: payload }),
+    listMyRatingsForCampaign: (campaignId) =>
+        request(`/ratings/given-by-me/${campaignId}`),
 };
 
 export { ApiError };

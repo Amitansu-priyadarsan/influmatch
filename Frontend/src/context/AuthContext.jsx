@@ -135,9 +135,26 @@ export function AuthProvider({ children }) {
         return created;
     };
 
-    const applyToCampaign = async (campaignId, message) => {
-        await api.applyToCampaign(campaignId, message || '');
+    const applyToCampaign = async (campaignId, payload) => {
+        // payload: { message?, proposedPrice?, proposedNote? } OR a string (legacy)
+        const body = typeof payload === 'string' ? { message: payload } : (payload || {});
+        await api.applyToCampaign(campaignId, body);
         await refreshCampaigns();
+    };
+
+    const postComment = async (campaignId, influencerId, body) => {
+        await api.postComment(campaignId, influencerId, body);
+        await refreshCampaigns();
+    };
+
+    const submitRating = async ({ campaignId, score, comment }) => {
+        await api.submitRating({ campaignId, score, comment });
+        await refreshCampaigns();
+        // Refresh /me so the user's own cached rating updates if they were the ratee.
+        try {
+            const me = await api.me();
+            setUser(me);
+        } catch { /* ignore */ }
     };
 
     const acceptApplication = async (campaignId, influencerId) => {
@@ -152,6 +169,11 @@ export function AuthProvider({ children }) {
 
     const assignInfluencer = async (campaignId, influencerId) => {
         const updated = await api.assignInfluencer(campaignId, influencerId);
+        setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+    };
+
+    const unassignInfluencer = async (campaignId) => {
+        const updated = await api.unassignInfluencer(campaignId);
         setCampaigns((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
     };
 
@@ -180,7 +202,10 @@ export function AuthProvider({ children }) {
                 acceptApplication,
                 rejectApplication,
                 assignInfluencer,
+                unassignInfluencer,
                 submitPost,
+                postComment,
+                submitRating,
             }}
         >
             {children}

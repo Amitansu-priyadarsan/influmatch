@@ -59,12 +59,32 @@ if (typeof document !== 'undefined' && !document.getElementById('ob-camp-styles'
   document.head.appendChild(tag);
 }
 
+function formatCompensation(c) {
+  if (!c) return '—';
+  if (c.compensationType === 'cash') {
+    if (c.priceMin && c.priceMax) return `₹${c.priceMin.toLocaleString()} – ₹${c.priceMax.toLocaleString()}`;
+    return c.priceMax ? `Up to ₹${c.priceMax.toLocaleString()}` : 'Cash';
+  }
+  if (c.compensationType === 'barter') {
+    return c.barterValue ? `Barter · worth ₹${c.barterValue.toLocaleString()}` : 'Barter';
+  }
+  // mixed
+  const cash = c.priceMin && c.priceMax
+    ? `₹${c.priceMin.toLocaleString()}–₹${c.priceMax.toLocaleString()}`
+    : (c.priceMax ? `up to ₹${c.priceMax.toLocaleString()}` : 'cash');
+  return `${cash} + perks`;
+}
+
 export default function OwnerCampaigns() {
   const { user, campaigns, influencers, createCampaign, assignInfluencer } = useAuth();
   const navigate = useNavigate();
   const [createOpen, setCreateOpen] = useState(false);
   const [assignOpen, setAssignOpen] = useState(null);
-  const [form, setForm] = useState({ title: '', offer: '', promoCode: '', startDate: '', endDate: '' });
+  const [form, setForm] = useState({
+    title: '', offer: '', promoCode: '', startDate: '', endDate: '',
+    compensationType: 'cash', priceMin: '', priceMax: '',
+    barterDescription: '', barterValue: '',
+  });
   const [errors, setErrors] = useState({});
   const [success, setSuccess] = useState('');
   const [filter, setFilter] = useState('all');
@@ -92,6 +112,16 @@ export default function OwnerCampaigns() {
     if (!form.promoCode) e.promoCode = 'Promo code is required';
     if (!form.startDate) e.startDate = 'Required';
     if (!form.endDate) e.endDate = 'Required';
+    if (form.compensationType !== 'barter') {
+      const min = parseInt(form.priceMin || '0', 10);
+      const max = parseInt(form.priceMax || '0', 10);
+      if (!min) e.priceMin = 'Min price required';
+      if (!max) e.priceMax = 'Max price required';
+      if (min && max && min > max) e.priceMax = 'Max must be ≥ min';
+    }
+    if (form.compensationType !== 'cash' && !form.barterDescription.trim()) {
+      e.barterDescription = 'Describe what the creator gets';
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -99,12 +129,29 @@ export default function OwnerCampaigns() {
   const handleCreate = async (e) => {
     e.preventDefault();
     if (!validate()) return;
+    const payload = {
+      title: form.title,
+      offer: form.offer,
+      promoCode: form.promoCode,
+      startDate: form.startDate,
+      endDate: form.endDate,
+      compensationType: form.compensationType,
+      priceMin: form.compensationType === 'barter' ? null : (parseInt(form.priceMin, 10) || null),
+      priceMax: form.compensationType === 'barter' ? null : (parseInt(form.priceMax, 10) || null),
+      barterDescription: form.compensationType === 'cash' ? '' : form.barterDescription.trim(),
+      barterValue: form.compensationType === 'cash' || !form.barterValue
+        ? null : (parseInt(form.barterValue, 10) || null),
+    };
     try {
-      await createCampaign(form);
+      await createCampaign(payload);
       setSuccess('Campaign created');
       setTimeout(() => {
         setCreateOpen(false);
-        setForm({ title: '', offer: '', promoCode: '', startDate: '', endDate: '' });
+        setForm({
+          title: '', offer: '', promoCode: '', startDate: '', endDate: '',
+          compensationType: 'cash', priceMin: '', priceMax: '',
+          barterDescription: '', barterValue: '',
+        });
         setSuccess('');
       }, 1100);
     } catch (err) {
@@ -183,6 +230,7 @@ export default function OwnerCampaigns() {
                   <p className="offer">{c.offer}</p>
                   <div className="meta">
                     <span><span className="k">Code</span><span className="code">{c.promoCode}</span></span>
+                    <span><span className="k">Pay</span><span className="code">{formatCompensation(c)}</span></span>
                     <span><span className="k">Window</span>{c.startDate} → {c.endDate}</span>
                   </div>
 
@@ -207,10 +255,22 @@ export default function OwnerCampaigns() {
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg>
                       Applicants ({apps.length})
                     </button>
-                    <button className="btn-line" onClick={() => setAssignOpen(c.id)}>
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M19 8v6M16 11h6"/></svg>
-                      {inf ? 'Reassign' : 'Assign'}
-                    </button>
+                    {(c.status === 'submitted' || c.status === 'closed') ? (
+                      <button className="btn-solid" onClick={() => navigate(`/owner/applicants/${c.id}`)}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="12 2 15 8.5 22 9.3 17 14 18.2 21 12 17.8 5.8 21 7 14 2 9.3 9 8.5 12 2"/></svg>
+                        Rate creator
+                      </button>
+                    ) : c.assignedInfluencer ? (
+                      <button className="btn-line" onClick={() => navigate(`/owner/applicants/${c.id}`)} title="Manage / unassign on the applicants page">
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>
+                        Assigned
+                      </button>
+                    ) : (
+                      <button className="btn-line" onClick={() => setAssignOpen(c.id)}>
+                        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3"/><path d="M3 20c0-3 3-5 6-5s6 2 6 5"/><path d="M19 8v6M16 11h6"/></svg>
+                        Assign
+                      </button>
+                    )}
                   </div>
                 </div>
               );
@@ -280,6 +340,68 @@ export default function OwnerCampaigns() {
                       {errors.endDate && <div className="err">{errors.endDate}</div>}
                     </div>
                   </div>
+
+                  {/* ---------- Compensation ---------- */}
+                  <div className="fld">
+                    <label>Compensation</label>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      {['cash', 'barter', 'mixed'].map((k) => (
+                        <button
+                          key={k}
+                          type="button"
+                          onClick={() => setForm({ ...form, compensationType: k })}
+                          style={{
+                            flex: 1, padding: '10px 12px', borderRadius: 8,
+                            border: '1px solid ' + (form.compensationType === k ? 'var(--accent)' : 'var(--line-2)'),
+                            background: form.compensationType === k ? 'var(--accent-soft)' : 'var(--surface-1)',
+                            color: form.compensationType === k ? 'var(--accent)' : 'var(--fg-dim)',
+                            fontSize: 12.5, fontWeight: 600, textTransform: 'capitalize', cursor: 'pointer',
+                          }}
+                        >
+                          {k === 'mixed' ? 'Cash + perks' : k}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {form.compensationType !== 'barter' && (
+                    <div className="row2">
+                      <div className="fld">
+                        <label>Price min (₹)</label>
+                        <input type="number" min="0" step="100" placeholder="5000"
+                          value={form.priceMin}
+                          onChange={(e) => setForm({ ...form, priceMin: e.target.value })} />
+                        {errors.priceMin && <div className="err">{errors.priceMin}</div>}
+                      </div>
+                      <div className="fld">
+                        <label>Price max (₹)</label>
+                        <input type="number" min="0" step="100" placeholder="10000"
+                          value={form.priceMax}
+                          onChange={(e) => setForm({ ...form, priceMax: e.target.value })} />
+                        {errors.priceMax && <div className="err">{errors.priceMax}</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  {form.compensationType !== 'cash' && (
+                    <>
+                      <div className="fld">
+                        <label>What the creator gets (perks / barter)</label>
+                        <textarea placeholder="e.g. Free product hamper + 6-month subscription"
+                          value={form.barterDescription}
+                          onChange={(e) => setForm({ ...form, barterDescription: e.target.value })} />
+                        {errors.barterDescription && <div className="err">{errors.barterDescription}</div>}
+                      </div>
+                      <div className="fld">
+                        <label>Approx perk value (₹) <span style={{ color: 'var(--fg-mute)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>· optional</span></label>
+                        <input type="number" min="0" step="100" placeholder="2000"
+                          value={form.barterValue}
+                          onChange={(e) => setForm({ ...form, barterValue: e.target.value })} />
+                      </div>
+                    </>
+                  )}
+
+                  {errors.submit && <div className="err" style={{ marginTop: 6 }}>{errors.submit}</div>}
 
                   <div className="m-actions">
                     <button type="button" className="btn-line" onClick={closeCreate}>Cancel</button>

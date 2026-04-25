@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import InfluencerLayout from '../../components/layouts/InfluencerLayout';
 
@@ -101,12 +102,30 @@ const daysLeft = (endDate) => {
   return diff > 0 ? diff : 0;
 };
 
+function formatCompensation(c) {
+  if (!c) return '';
+  if (c.compensationType === 'cash') {
+    if (c.priceMin && c.priceMax) return `₹${c.priceMin.toLocaleString()} – ₹${c.priceMax.toLocaleString()}`;
+    return c.priceMax ? `Up to ₹${c.priceMax.toLocaleString()}` : 'Cash';
+  }
+  if (c.compensationType === 'barter') {
+    return c.barterValue ? `Barter · ₹${c.barterValue.toLocaleString()} value` : 'Barter';
+  }
+  const cash = c.priceMin && c.priceMax
+    ? `₹${c.priceMin.toLocaleString()}–₹${c.priceMax.toLocaleString()}`
+    : (c.priceMax ? `up to ₹${c.priceMax.toLocaleString()}` : 'cash');
+  return `${cash} + perks`;
+}
+
 export default function InfluencerBrowseCampaigns() {
-  const { user, campaigns, owners, applyToCampaign } = useAuth();
+  const { user, campaigns, applyToCampaign } = useAuth();
+  const navigate = useNavigate();
   const [search, setSearch] = useState('');
   const [detail, setDetail] = useState(null);
   const [applyMode, setApplyMode] = useState(false);
   const [message, setMessage] = useState('');
+  const [proposedPrice, setProposedPrice] = useState('');
+  const [proposedNote, setProposedNote] = useState('');
   const [applied, setApplied] = useState(false);
 
   const openCampaigns = campaigns.filter((c) => c.status === 'open');
@@ -131,11 +150,22 @@ export default function InfluencerBrowseCampaigns() {
     setApplyMode(false);
     setApplied(false);
     setMessage('');
+    setProposedPrice('');
+    setProposedNote('');
+  };
+
+  const openConversation = (campaignId) => {
+    closeModal();
+    navigate(`/influencer/conversation/${campaignId}`);
   };
 
   const handleApply = async () => {
     try {
-      await applyToCampaign(detail.id, message);
+      await applyToCampaign(detail.id, {
+        message,
+        proposedPrice: proposedPrice ? parseInt(proposedPrice, 10) : null,
+        proposedNote: proposedNote || '',
+      });
       setApplied(true);
       setTimeout(closeModal, 1600);
     } catch {
@@ -178,6 +208,7 @@ export default function InfluencerBrowseCampaigns() {
                   <div className="brand-name">{c.brand}</div>
                   <p className="offer">{c.offer}</p>
                   <div className="tags">
+                    <span style={{ color: 'var(--accent)', borderColor: 'var(--accent)' }}>{formatCompensation(c)}</span>
                     <span>Code · {c.promoCode}</span>
                     <span>{(c.applications || []).length} applied</span>
                   </div>
@@ -198,12 +229,36 @@ export default function InfluencerBrowseCampaigns() {
         )}
       </div>
 
-      {detail && <Modal detail={detail} owner={owners.find((o) => o.id === detail.ownerId)} status={getAppStatus(detail)} applyMode={applyMode} setApplyMode={setApplyMode} message={message} setMessage={setMessage} applied={applied} onApply={handleApply} onClose={closeModal} user={user} />}
+      {detail && <Modal
+        detail={detail}
+        status={getAppStatus(detail)}
+        applyMode={applyMode}
+        setApplyMode={setApplyMode}
+        message={message}
+        setMessage={setMessage}
+        proposedPrice={proposedPrice}
+        setProposedPrice={setProposedPrice}
+        proposedNote={proposedNote}
+        setProposedNote={setProposedNote}
+        applied={applied}
+        onApply={handleApply}
+        onClose={closeModal}
+        user={user}
+        onOpenConversation={openConversation}
+      />}
     </InfluencerLayout>
   );
 }
 
-function Modal({ detail, owner, status, applyMode, setApplyMode, message, setMessage, applied, onApply, onClose, user }) {
+function Modal({
+  detail, status, applyMode, setApplyMode,
+  message, setMessage,
+  proposedPrice, setProposedPrice,
+  proposedNote, setProposedNote,
+  applied, onApply, onClose, user, onOpenConversation,
+}) {
+  const myApp = (detail.applications || []).find((a) => a.influencerId === user.id);
+  const msgCount = (myApp?.comments || []).length;
   const initial = (user.profile?.fullName?.charAt(0) || 'C').toUpperCase();
   const remaining = daysLeft(detail.endDate);
 
@@ -234,11 +289,15 @@ function Modal({ detail, owner, status, applyMode, setApplyMode, message, setMes
           <>
             <div className="m-kick">Campaign · {detail.brand}</div>
             <h3>{detail.title}</h3>
-            <div className="m-brand">{owner ? `${detail.brand} · ${owner.city || ''}` : detail.brand}</div>
+            <div className="m-brand">{detail.brand}</div>
 
             <p className="m-offer">{detail.offer}</p>
 
             <div className="m-meta">
+              <div className="cell">
+                <div className="l">Compensation</div>
+                <div className="v code">{formatCompensation(detail)}</div>
+              </div>
               <div className="cell">
                 <div className="l">Promo code</div>
                 <div className="v code">{detail.promoCode}</div>
@@ -251,15 +310,57 @@ function Modal({ detail, owner, status, applyMode, setApplyMode, message, setMes
                 <div className="l">Time left</div>
                 <div className="v">{remaining} days</div>
               </div>
-              <div className="cell">
-                <div className="l">Applications</div>
-                <div className="v">{(detail.applications || []).length}</div>
-              </div>
             </div>
+
+            {detail.barterDescription && (
+              <div style={{
+                padding: '12px 14px', border: '1px solid var(--accent-border)',
+                background: 'var(--accent-soft)', borderRadius: 10, marginBottom: 16,
+                fontSize: 13.5, color: 'var(--fg-dim)', lineHeight: 1.5,
+              }}>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--accent)', letterSpacing: '.16em', textTransform: 'uppercase', marginBottom: 4 }}>
+                  Perks included
+                </div>
+                {detail.barterDescription}
+              </div>
+            )}
 
             {status === 'pending' && <div className="m-status applied">✓ Applied — waiting for review</div>}
             {status === 'accepted' && <div className="m-status applied">✓ Accepted — check My Campaigns</div>}
             {status === 'rejected' && <div className="m-status rejected">Not selected this time</div>}
+
+            {myApp && (
+              <button
+                type="button"
+                onClick={() => onOpenConversation(detail.id)}
+                style={{
+                  marginTop: 14, width: '100%',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12,
+                  padding: '14px 18px', borderRadius: 12,
+                  border: '1px solid var(--accent-border)',
+                  background: 'var(--accent-soft)',
+                  color: 'var(--fg)', cursor: 'pointer', transition: '.15s',
+                }}
+              >
+                <span style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span style={{
+                    width: 36, height: 36, borderRadius: 9, background: 'var(--accent)',
+                    color: 'var(--accent-ink)', display: 'grid', placeItems: 'center', flex: 'none',
+                  }}>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+                  </span>
+                  <span style={{ textAlign: 'left' }}>
+                    <span style={{ display: 'block', fontWeight: 600, fontSize: 14, color: 'var(--fg)' }}>
+                      Open conversation
+                    </span>
+                    <span style={{ display: 'block', fontFamily: 'var(--mono)', fontSize: 10.5, letterSpacing: '.08em', color: 'var(--fg-mute)', marginTop: 2 }}>
+                      {msgCount > 0 ? `${msgCount} message${msgCount !== 1 ? 's' : ''} with ${detail.brand}` : `Message ${detail.brand} directly`}
+                    </span>
+                  </span>
+                </span>
+                <span style={{ color: 'var(--accent)', fontWeight: 600 }}>→</span>
+              </button>
+            )}
 
             <div className="m-actions">
               <button className="btn btn-line" onClick={onClose}>Close</button>
@@ -289,6 +390,25 @@ function Modal({ detail, owner, status, applyMode, setApplyMode, message, setMes
               <textarea placeholder="I have 45K engaged followers in the food niche and would love to create content for this campaign..."
                 value={message}
                 onChange={(e) => setMessage(e.target.value)} />
+            </div>
+
+            {detail.compensationType !== 'barter' && (
+              <div className="fld">
+                <label>
+                  Counter-offer in ₹ <span className="opt">— optional, propose your rate</span>
+                </label>
+                <input type="number" min="0" step="100"
+                  placeholder={detail.priceMax ? String(detail.priceMax) : '5000'}
+                  value={proposedPrice}
+                  onChange={(e) => setProposedPrice(e.target.value)} />
+              </div>
+            )}
+
+            <div className="fld">
+              <label>Note about your terms <span className="opt">— optional</span></label>
+              <textarea placeholder="e.g. Includes 1 reel + 3 stories. Usage rights for 30 days."
+                value={proposedNote}
+                onChange={(e) => setProposedNote(e.target.value)} />
             </div>
 
             <div className="m-actions">
