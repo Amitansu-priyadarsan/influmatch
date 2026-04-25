@@ -128,17 +128,19 @@ export default function OwnerApplicants() {
   };
 
   const filtered = applications.filter((a) => filter === 'all' || a.status === filter);
-  const getInf = (id) => influencers.find((i) => i.id === id);
+  // Prefer the inlined creator snapshot from the API; fall back to the
+  // influencers list (used when the assigned creator was direct-assigned
+  // and has no application row).
+  const getInf = (id, app) =>
+    (app && app.creator) || influencers.find((i) => i.id === id) || null;
 
-  const handleAccept = (id) => {
-    acceptApplication(campaignId, id);
-    setConfirmAccept(null);
-    setProfileOpen(null);
+  const handleAccept = async (id) => {
+    try { await acceptApplication(campaignId, id); }
+    finally { setConfirmAccept(null); setProfileOpen(null); }
   };
-  const handleReject = (id) => {
-    rejectApplication(campaignId, id);
-    setConfirmReject(null);
-    setProfileOpen(null);
+  const handleReject = async (id) => {
+    try { await rejectApplication(campaignId, id); }
+    finally { setConfirmReject(null); setProfileOpen(null); }
   };
 
   return (
@@ -195,7 +197,7 @@ export default function OwnerApplicants() {
               {filtered.length === 0 ? (
                 <div className="empty"><p>No applications match this filter.</p></div>
               ) : filtered.map((app) => {
-                const inf = getInf(app.influencerId);
+                const inf = getInf(app.influencerId, app);
                 if (!inf) return null;
                 const st = STATUS[app.status];
                 return (
@@ -299,10 +301,10 @@ export default function OwnerApplicants() {
                 </div>
                 <div className="info-cell">
                   <div className="l">
-                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92V21a1 1 0 01-1.1 1A19 19 0 012 4.1 1 1 0 013 3h4.09a1 1 0 011 .75l1 4a1 1 0 01-.27 1L7.21 10.79a16 16 0 006 6l2.05-1.6a1 1 0 011-.27l4 1a1 1 0 01.74 1z"/></svg>
-                    Phone
+                    <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
+                    Niche
                   </div>
-                  <div className="v">{inf.profile?.phone || '—'}</div>
+                  <div className="v">{inf.profile?.niche || '—'}</div>
                 </div>
                 {inf.profile?.bio && (
                   <div className="info-cell full">

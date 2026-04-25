@@ -96,21 +96,28 @@ export default function OwnerCampaigns() {
     return Object.keys(e).length === 0;
   };
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault();
     if (!validate()) return;
-    createCampaign(form);
-    setSuccess('Campaign created');
-    setTimeout(() => {
-      setCreateOpen(false);
-      setForm({ title: '', offer: '', promoCode: '', startDate: '', endDate: '' });
-      setSuccess('');
-    }, 1100);
+    try {
+      await createCampaign(form);
+      setSuccess('Campaign created');
+      setTimeout(() => {
+        setCreateOpen(false);
+        setForm({ title: '', offer: '', promoCode: '', startDate: '', endDate: '' });
+        setSuccess('');
+      }, 1100);
+    } catch (err) {
+      setErrors({ submit: err.message || 'Could not create campaign' });
+    }
   };
 
-  const handleAssign = (campaignId, influencerId) => {
-    assignInfluencer(campaignId, influencerId);
-    setAssignOpen(null);
+  const handleAssign = async (campaignId, influencerId) => {
+    try {
+      await assignInfluencer(campaignId, influencerId);
+    } finally {
+      setAssignOpen(null);
+    }
   };
 
   const closeCreate = () => {
@@ -156,7 +163,9 @@ export default function OwnerCampaigns() {
         ) : (
           <div className="grid">
             {filtered.map((c) => {
-              const inf = influencers.find((i) => i.id === c.assignedInfluencer);
+              const accApp = (c.applications || []).find((a) => a.influencerId === c.assignedInfluencer);
+              const inf = (accApp && accApp.creator)
+                || influencers.find((i) => i.id === c.assignedInfluencer);
               const apps = c.applications || [];
               const pendingCount = apps.filter((a) => a.status === 'pending').length;
               const acceptedCount = apps.filter((a) => a.status === 'accepted').length;

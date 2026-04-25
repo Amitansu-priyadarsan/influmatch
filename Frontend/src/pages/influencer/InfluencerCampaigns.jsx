@@ -79,17 +79,21 @@ export default function InfluencerCampaigns() {
     return true;
   });
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!postLink.trim()) { setError('Please enter your Instagram post link'); return; }
     if (!postLink.startsWith('http')) { setError('Enter a valid URL starting with http'); return; }
-    submitPost(submitFor, postLink);
-    setOkId(submitFor);
-    setTimeout(() => {
-      setSubmitFor(null);
-      setPostLink('');
-      setError('');
-      setOkId(null);
-    }, 1500);
+    try {
+      await submitPost(submitFor, postLink);
+      setOkId(submitFor);
+      setTimeout(() => {
+        setSubmitFor(null);
+        setPostLink('');
+        setError('');
+        setOkId(null);
+      }, 1500);
+    } catch (err) {
+      setError(err.message || 'Could not submit. Try again.');
+    }
   };
 
   const closeModal = () => {

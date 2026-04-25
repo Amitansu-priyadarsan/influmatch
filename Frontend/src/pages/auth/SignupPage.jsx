@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { ensureSession } from '../../lib/api';
 
 const CSS = `
 .im-signup{--bg:#0b0b0c;--bg-2:#111113;--bg-3:#17171a;--line:rgba(255,255,255,0.08);--line-2:rgba(255,255,255,0.14);--fg:#ededec;--fg-dim:#a6a6a3;--fg-mute:#6b6b68;--accent:oklch(0.86 0.14 104);--accent-ink:#0b0b0c;--serif:'Instrument Serif','Times New Roman',serif;--sans:'Geist',ui-sans-serif,system-ui,sans-serif;--mono:'Geist Mono',ui-monospace,monospace;background:var(--bg);color:var(--fg);font-family:var(--sans);font-weight:400;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;position:relative}
@@ -110,7 +111,7 @@ const CSS = `
 `;
 
 export default function SignupPage() {
-  const { signup } = useAuth();
+  const { signup, user } = useAuth();
   const navigate = useNavigate();
 
   const [role, setRole] = useState('influencer');
@@ -121,6 +122,11 @@ export default function SignupPage() {
   const [agree, setAgree] = useState(true);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (user) return;
+    ensureSession().catch(() => {});
+  }, [user]);
 
   const score = (() => {
     let s = 0;
@@ -137,19 +143,17 @@ export default function SignupPage() {
       ? 'KEEP GOING — MIX UPPERCASE, NUMBERS, SYMBOLS'
       : 'MIN 8 CHARS · MIX LETTERS + NUMBERS';
 
-  const handleSignup = (e) => {
+  const handleSignup = async (e) => {
     e.preventDefault();
     setError('');
     if (password.length < 6) { setError('Password must be at least 6 characters'); return; }
     if (!agree) { setError('Please accept the terms to continue'); return; }
     setLoading(true);
-    setTimeout(() => {
-      const result = signup({ role: role === 'brand' ? 'owner' : 'influencer', email, password, name });
-      setLoading(false);
-      if (!result.success) { setError(result.error); return; }
-      if (result.role === 'owner') navigate('/owner/onboarding');
-      else if (result.role === 'influencer') navigate('/influencer/onboarding');
-    }, 500);
+    const result = await signup({ role: role === 'brand' ? 'owner' : 'influencer', email, password, name });
+    setLoading(false);
+    if (!result.success) { setError(result.error); return; }
+    if (result.role === 'owner') navigate('/owner/onboarding');
+    else if (result.role === 'influencer') navigate('/influencer/onboarding');
   };
 
   return (

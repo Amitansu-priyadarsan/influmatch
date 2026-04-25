@@ -84,19 +84,23 @@ export default function OwnerOnboarding() {
     goto(2);
   };
 
-  const finish = () => {
+  const finish = async () => {
     const categoryName = CATEGORIES.find((c) => c.id === form.category)?.name || '';
     const budgetLabel = BUDGETS.find((b) => b.id === form.budget)?.label || '';
-    completeOwnerOnboarding({
-      business: form.business.trim(),
-      city: form.city.trim(),
-      category: categoryName,
-      website: form.website.trim(),
-      phone: form.phone.trim(),
-      budget: budgetLabel,
-      description: form.description.trim(),
-    });
-    setDone(true);
+    try {
+      await completeOwnerOnboarding({
+        business: form.business.trim(),
+        city: form.city.trim(),
+        category: categoryName,
+        website: form.website.trim(),
+        phone: form.phone.trim(),
+        budget: budgetLabel,
+        description: form.description.trim(),
+      });
+      setDone(true);
+    } catch (err) {
+      setErrors({ submit: err.message || 'Could not save. Try again.' });
+    }
   };
 
   const progress = step * 50;

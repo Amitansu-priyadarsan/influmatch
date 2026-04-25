@@ -28,15 +28,31 @@ import InfluencerBrowseCampaigns from './pages/influencer/InfluencerBrowseCampai
 import InfluencerCampaigns from './pages/influencer/InfluencerCampaigns';
 import InfluencerProfile from './pages/influencer/InfluencerProfile';
 
+function BootGate({ children }) {
+  const { bootLoading } = useAuth();
+  if (bootLoading) {
+    return (
+      <div style={{
+        minHeight: '100vh', display: 'grid', placeItems: 'center',
+        background: 'var(--bg, #0b0b0c)', color: 'var(--fg-mute, #6b6b68)',
+        fontFamily: 'ui-monospace, monospace', fontSize: 12, letterSpacing: '.18em', textTransform: 'uppercase',
+      }}>Loading…</div>
+    );
+  }
+  return children;
+}
+
 function ProtectedRoute({ children, allowedRole }) {
-  const { user } = useAuth();
+  const { user, bootLoading } = useAuth();
+  if (bootLoading) return null;
   if (!user) return <Navigate to="/login" replace />;
   if (allowedRole && user.role !== allowedRole) return <Navigate to="/login" replace />;
   return children;
 }
 
 function RootRedirect() {
-  const { user } = useAuth();
+  const { user, bootLoading } = useAuth();
+  if (bootLoading) return null;
   if (!user) return <LandingPage />;
   if (user.role === 'admin') return <Navigate to="/admin/dashboard" replace />;
   if (user.role === 'owner') {
@@ -117,7 +133,9 @@ function App() {
     <BrowserRouter>
       <ThemeProvider>
         <AuthProvider>
-          <AppRoutes />
+          <BootGate>
+            <AppRoutes />
+          </BootGate>
         </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>

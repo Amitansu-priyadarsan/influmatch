@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { ensureSession } from '../../lib/api';
 
 const CSS = `
 .im-auth{--bg:#0b0b0c;--bg-2:#111113;--bg-3:#17171a;--line:rgba(255,255,255,0.08);--line-2:rgba(255,255,255,0.14);--fg:#ededec;--fg-dim:#a6a6a3;--fg-mute:#6b6b68;--accent:oklch(0.86 0.14 104);--accent-ink:#0b0b0c;--serif:'Instrument Serif','Times New Roman',serif;--sans:'Geist',ui-sans-serif,system-ui,sans-serif;--mono:'Geist Mono',ui-monospace,monospace;background:var(--bg);color:var(--fg);font-family:var(--sans);font-weight:400;-webkit-font-smoothing:antialiased;min-height:100vh;overflow-x:hidden;position:relative}
@@ -78,7 +79,7 @@ const EyeIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor
 const CheckIcon = () => (<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12l5 5L20 7"/></svg>);
 
 export default function LoginPage() {
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -87,24 +88,26 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = (e) => {
+  useEffect(() => {
+    if (user) return;
+    ensureSession().catch(() => {});
+  }, [user]);
+
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError('');
     setLoading(true);
-    setTimeout(() => {
-      const result = login(email.trim(), password);
-      setLoading(false);
-      if (!result.success) { setError(result.error); return; }
-      if (result.role === 'admin') navigate('/admin/dashboard');
-      else if (result.role === 'owner') navigate(result.onboarded ? '/owner/dashboard' : '/owner/onboarding');
-      else if (result.role === 'influencer') navigate(result.onboarded ? '/influencer/dashboard' : '/influencer/onboarding');
-    }, 500);
+    const result = await login(email.trim(), password);
+    setLoading(false);
+    if (!result.success) { setError(result.error); return; }
+    if (result.role === 'admin') navigate('/admin/dashboard');
+    else if (result.role === 'owner') navigate(result.onboarded ? '/owner/dashboard' : '/owner/onboarding');
+    else if (result.role === 'influencer') navigate(result.onboarded ? '/influencer/dashboard' : '/influencer/onboarding');
   };
 
-  const fillCredentials = (role) => {
-    if (role === 'admin') { setEmail('admin@influmatch.com'); setPassword('Admin@1234'); }
-    else if (role === 'influencer') { setEmail('priya@example.com'); setPassword('password123'); }
-    else if (role === 'owner') { setEmail('cafe@brewhouse.com'); setPassword('password123'); }
+  const fillAdmin = () => {
+    setEmail('admin@influmatch.com');
+    setPassword('Admin@1234');
   };
 
   return (
@@ -158,11 +161,9 @@ export default function LoginPage() {
             </button>
 
             <div className="demo">
-              <div className="demo-lbl">Demo accounts · click to fill</div>
-              <div className="demo-row">
-                <button type="button" className="demo-btn" onClick={()=>fillCredentials('admin')}>Admin</button>
-                <button type="button" className="demo-btn" onClick={()=>fillCredentials('influencer')}>Creator</button>
-                <button type="button" className="demo-btn" onClick={()=>fillCredentials('owner')}>Brand</button>
+              <div className="demo-lbl">Admin · click to fill</div>
+              <div className="demo-row" style={{ gridTemplateColumns: '1fr' }}>
+                <button type="button" className="demo-btn" onClick={fillAdmin}>Use admin credentials</button>
               </div>
             </div>
 

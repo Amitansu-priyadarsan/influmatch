@@ -240,7 +240,7 @@ export default function InfluencerOnboarding() {
     (step === 3 && niches.size > 0) ||
     (step === 4);
 
-  const finish = () => {
+  const finish = async () => {
     const e = {};
     if (!form.fullName.trim()) e.fullName = 'Full name is required';
     if (!form.phone.trim()) e.phone = 'Phone is required';
@@ -249,19 +249,22 @@ export default function InfluencerOnboarding() {
 
     const nicheNames = [...niches].map((id) => NICHES.find((n) => n.id === id)?.name).filter(Boolean);
     const primary = platforms.instagram || Object.values(platforms)[0] || {};
-    completeOnboarding({
-      fullName: form.fullName.trim(),
-      phone: form.phone.trim(),
-      city: form.city.trim(),
-      bio: form.bio.trim(),
-      niche: nicheNames[0] || '',
-      niches: nicheNames,
-      contentTypes: [],
-      platforms,
-      instagram: platforms.instagram?.handle || '',
-      followers: primary.followers || '',
-    });
-    setDone(true);
+    try {
+      await completeOnboarding({
+        fullName: form.fullName.trim(),
+        phone: form.phone.trim(),
+        city: form.city.trim(),
+        bio: form.bio.trim(),
+        niche: nicheNames[0] || '',
+        niches: nicheNames,
+        platforms,
+        instagram: platforms.instagram?.handle || '',
+        followers: primary.followers || '',
+      });
+      setDone(true);
+    } catch (err) {
+      setErrors({ submit: err.message || 'Could not save profile. Try again.' });
+    }
   };
 
   const progress = step * 25;

@@ -133,10 +133,14 @@ export default function InfluencerBrowseCampaigns() {
     setMessage('');
   };
 
-  const handleApply = () => {
-    applyToCampaign(detail.id, message);
-    setApplied(true);
-    setTimeout(closeModal, 1600);
+  const handleApply = async () => {
+    try {
+      await applyToCampaign(detail.id, message);
+      setApplied(true);
+      setTimeout(closeModal, 1600);
+    } catch {
+      // noop — UI stays on the apply form so user can retry
+    }
   };
 
   return (

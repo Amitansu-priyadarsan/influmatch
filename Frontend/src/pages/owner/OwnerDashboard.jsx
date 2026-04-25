@@ -150,7 +150,9 @@ export default function OwnerDashboard() {
         ) : (
           <div className="row">
             {myCampaigns.slice(-4).reverse().map((c) => {
-              const inf = influencers.find((i) => i.id === c.assignedInfluencer);
+              const accApp = (c.applications || []).find((a) => a.influencerId === c.assignedInfluencer);
+              const inf = (accApp && accApp.creator)
+                || influencers.find((i) => i.id === c.assignedInfluencer);
               const apps = c.applications || [];
               const pendingCount = apps.filter((a) => a.status === 'pending').length;
               const statusClass = c.submittedPost ? 'submitted' : c.status === 'active' ? 'active' : 'open';
