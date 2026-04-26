@@ -109,6 +109,11 @@ export const api = {
         request(`/campaigns/${campaignId}/submit-post`, { method: 'POST', body: { postLink } }),
     listInfluencers: () => request('/influencers'),
 
+    // Public profiles (visible to any signed-in user)
+    getInfluencer: (id) => request(`/influencers/${id}`),
+    listBrands: () => request('/brands'),
+    getBrand: (id) => request(`/brands/${id}`),
+
     // Comments (negotiation thread)
     listComments: (campaignId, influencerId) =>
         request(`/applications/${campaignId}/${influencerId}/comments`),

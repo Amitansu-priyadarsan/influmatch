@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import InfluencerLayout from '../../components/layouts/InfluencerLayout';
+import AvatarUpload from '../../components/ui/AvatarUpload';
 
 const PROFILE_CSS = `
 .im-prof .head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:32px;flex-wrap:wrap}
@@ -18,7 +19,8 @@ const PROFILE_CSS = `
 .im-prof .btn-solid:disabled{opacity:.45;cursor:not-allowed;filter:none}
 
 .im-prof .hero{display:grid;grid-template-columns:auto 1fr auto;gap:26px;align-items:center;padding:28px;border:1px solid var(--line);border-radius:14px;background:var(--bg-2);margin-bottom:32px}
-.im-prof .hero .av{width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,var(--avatar-from),var(--avatar-to));border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--serif);font-size:40px;color:var(--fg-dim)}
+.im-prof .hero .av{width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,var(--avatar-from),var(--avatar-to));border:1px solid var(--line-2);display:grid;place-items:center;font-family:var(--serif);font-size:40px;color:var(--fg-dim);overflow:hidden}
+.im-prof .hero .av img{width:100%;height:100%;object-fit:cover;display:block}
 .im-prof .hero h2{font-family:var(--serif);font-weight:400;font-size:34px;letter-spacing:-.015em;line-height:1;margin:0}
 .im-prof .hero .line{font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-dim);margin-top:10px}
 .im-prof .hero .line span{color:var(--fg-mute);margin:0 8px}
@@ -107,6 +109,7 @@ export default function InfluencerProfile() {
     niche: user.profile?.niche || '',
     instagram: user.profile?.instagram || '',
     followers: user.profile?.followers || '',
+    avatarUrl: user.profile?.avatarUrl || '',
   });
 
   const profile = user.profile || {};
@@ -127,6 +130,7 @@ export default function InfluencerProfile() {
       niche: form.niche.trim(),
       instagram: form.instagram.trim(),
       followers: form.followers.trim(),
+      avatarUrl: form.avatarUrl || '',
       platforms: profile.platforms || {},
       niches: profile.niches || [],
       contentTypes: profile.contentTypes || [],
@@ -145,6 +149,7 @@ export default function InfluencerProfile() {
       niche: profile.niche || '',
       instagram: profile.instagram || '',
       followers: profile.followers || '',
+      avatarUrl: profile.avatarUrl || '',
     });
     setEditing(false);
   };
@@ -170,7 +175,9 @@ export default function InfluencerProfile() {
         </div>
 
         <div className="hero">
-          <div className="av">{initial}</div>
+          <div className="av">
+            {profile.avatarUrl ? <img src={profile.avatarUrl} alt="" /> : initial}
+          </div>
           <div>
             <h2>{profile.fullName || 'Unnamed creator'}</h2>
             <div className="line">
@@ -239,6 +246,15 @@ export default function InfluencerProfile() {
           <>
             <div className="sec-head"><h3>Edit <em>profile.</em></h3></div>
             <div className="card">
+              <div className="fld">
+                <label>Profile photo <span className="opt">— optional, recommended</span></label>
+                <AvatarUpload
+                  value={form.avatarUrl}
+                  onChange={(v) => update('avatarUrl', v)}
+                  label="Add photo"
+                  hint="A clear face shot helps brands recognise you. JPG or PNG, up to 8 MB."
+                />
+              </div>
               <div className="grid-2">
                 <div className="fld">
                   <label>Full name</label>

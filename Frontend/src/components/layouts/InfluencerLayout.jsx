@@ -87,6 +87,10 @@ const NAV = [
     svg:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
   },
   {
+    to:'/influencer/brands', label:'Browse Brands',
+    svg:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
+  },
+  {
     to:'/influencer/campaigns', label:'My Campaigns',
     svg:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l18-7v16L3 13z"/><path d="M7 12v5"/></svg>
   },
@@ -152,7 +156,9 @@ export default function InfluencerLayout({ children, title }) {
 
         <div className="sb-foot">
           <button type="button" className="sb-user sb-user-btn" onClick={() => { setOpen(false); navigate('/influencer/profile'); }}>
-            <div className="av">{initials}</div>
+            <div className="av" style={ user?.profile?.avatarUrl ? { backgroundImage:`url(${user.profile.avatarUrl})`, backgroundSize:'cover', backgroundPosition:'center' } : undefined }>
+              {!user?.profile?.avatarUrl && initials}
+            </div>
             <div className="who">
               <b>{name}</b>
               <span>{handle}</span>

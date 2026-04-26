@@ -21,6 +21,8 @@ import OwnerCampaigns from './pages/owner/OwnerCampaigns';
 import OwnerApplicantsOverview from './pages/owner/OwnerApplicantsOverview';
 import OwnerApplicants from './pages/owner/OwnerApplicants';
 import OwnerApplicantReview from './pages/owner/OwnerApplicantReview';
+import PublicInfluencerProfile from './pages/owner/PublicInfluencerProfile';
+import OwnerProfile from './pages/owner/OwnerProfile';
 
 // Influencer
 import InfluencerOnboarding from './pages/influencer/InfluencerOnboarding';
@@ -29,6 +31,8 @@ import InfluencerBrowseCampaigns from './pages/influencer/InfluencerBrowseCampai
 import InfluencerCampaigns from './pages/influencer/InfluencerCampaigns';
 import InfluencerProfile from './pages/influencer/InfluencerProfile';
 import InfluencerConversation from './pages/influencer/InfluencerConversation';
+import InfluencerBrowseBrands from './pages/influencer/InfluencerBrowseBrands';
+import PublicBrandProfile from './pages/influencer/PublicBrandProfile';
 
 function BootGate({ children }) {
   const { bootLoading } = useAuth();
@@ -109,6 +113,12 @@ function AppRoutes() {
       <Route path="/owner/applicants/:campaignId/:influencerId" element={
         <ProtectedRoute allowedRole="owner"><OwnerApplicantReview /></ProtectedRoute>
       } />
+      <Route path="/owner/influencers/:id" element={
+        <ProtectedRoute allowedRole="owner"><PublicInfluencerProfile /></ProtectedRoute>
+      } />
+      <Route path="/owner/profile" element={
+        <ProtectedRoute allowedRole="owner"><OwnerProfile /></ProtectedRoute>
+      } />
 
       {/* Influencer Routes */}
       <Route path="/influencer/onboarding" element={
@@ -128,6 +138,12 @@ function AppRoutes() {
       } />
       <Route path="/influencer/conversation/:campaignId" element={
         <ProtectedRoute allowedRole="influencer"><InfluencerConversation /></ProtectedRoute>
+      } />
+      <Route path="/influencer/brands" element={
+        <ProtectedRoute allowedRole="influencer"><InfluencerBrowseBrands /></ProtectedRoute>
+      } />
+      <Route path="/influencer/brands/:id" element={
+        <ProtectedRoute allowedRole="influencer"><PublicBrandProfile /></ProtectedRoute>
       } />
 
       {/* Fallback */}

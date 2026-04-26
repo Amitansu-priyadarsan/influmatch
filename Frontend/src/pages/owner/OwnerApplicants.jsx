@@ -308,12 +308,18 @@ export default function OwnerApplicants() {
                 const msgs = (app.comments || []).length;
                 return (
                   <div key={app.influencerId} className="row">
-                    <div className="av">{inf.profile?.fullName?.charAt(0) || 'C'}</div>
+                    <div className="av" style={ inf.profile?.avatarUrl ? { backgroundImage:`url(${inf.profile.avatarUrl})`, backgroundSize:'cover', backgroundPosition:'center', color:'transparent' } : undefined }>
+                      {!inf.profile?.avatarUrl && (inf.profile?.fullName?.charAt(0) || 'C')}
+                    </div>
                     <div className="body">
                       <div className="top">
                         <h3>{inf.profile?.fullName}</h3>
                         <span className={'pill ' + st.cls}>{st.label}</span>
                         {inf.rating && <Stars score={inf.rating.score} count={inf.rating.count} />}
+                        <a
+                          onClick={(e) => { e.stopPropagation(); navigate(`/owner/influencers/${app.influencerId}`); }}
+                          style={{ marginLeft:'auto', fontFamily:'var(--mono)', fontSize:11, letterSpacing:'.14em', textTransform:'uppercase', color:'var(--accent)', cursor:'pointer' }}
+                        >View profile →</a>
                       </div>
                       <div className="info">
                         <span>@{inf.profile?.instagram}</span>

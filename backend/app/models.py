@@ -71,6 +71,7 @@ class InfluencerOnboardingRequest(BaseModel):
     platforms: Optional[dict[str, Any]] = None
     instagram: Optional[str] = ""
     followers: Optional[str] = ""
+    avatarUrl: Optional[str] = ""
 
 
 class OwnerOnboardingRequest(BaseModel):
@@ -81,6 +82,21 @@ class OwnerOnboardingRequest(BaseModel):
     phone: Optional[str] = ""
     budget: Optional[str] = ""
     description: Optional[str] = ""
+    avatarUrl: Optional[str] = ""
+
+
+# ----- Public profiles -----
+
+class PublicInfluencerProfile(BaseModel):
+    id: str
+    profile: Optional[dict[str, Any]] = None
+    rating: Optional[RatingSummary] = None
+
+
+class PublicBrandProfile(BaseModel):
+    id: str
+    profile: Optional[dict[str, Any]] = None
+    rating: Optional[RatingSummary] = None
 
 
 # ----- Campaigns -----

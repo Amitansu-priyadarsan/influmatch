@@ -94,6 +94,7 @@ def _profile_snapshot(profile: Optional[dict]) -> Optional[dict]:
         "platforms": profile.get("platforms"),
         "instagram": profile.get("instagram"),
         "followers": profile.get("followers"),
+        "avatarUrl": profile.get("avatar_url"),
     }
 
 

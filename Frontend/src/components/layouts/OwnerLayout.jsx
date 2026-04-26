@@ -128,6 +128,10 @@ const NAV = [
     to: '/owner/applicants', label: 'Applicants',
     svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20c0-3.5 3-6 6.5-6s6.5 2.5 6.5 6"/><circle cx="17" cy="9" r="2.5"/><path d="M21.5 18.5c0-2-1.5-3.5-4-3.5"/></svg>
   },
+  {
+    to: '/owner/profile', label: 'Profile',
+    svg: <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
+  },
 ];
 
 export default function OwnerLayout({ children, title, crumb }) {
@@ -174,7 +178,9 @@ export default function OwnerLayout({ children, title, crumb }) {
 
         <div className="sb-foot">
           <div className="sb-user">
-            <div className="av">{initials}</div>
+            <div className="av" style={ user?.profile?.avatarUrl ? { backgroundImage:`url(${user.profile.avatarUrl})`, backgroundSize:'cover', backgroundPosition:'center', color:'transparent' } : undefined }>
+              {!user?.profile?.avatarUrl && initials}
+            </div>
             <div className="who">
               <b>{business}</b>
               <span>{user?.email}</span>

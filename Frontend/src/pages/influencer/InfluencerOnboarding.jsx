@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import AvatarUpload from '../../components/ui/AvatarUpload';
 
 const ONBOARDING_CSS = `
 .im-onb{min-height:100vh;background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased;position:relative}
@@ -202,6 +203,7 @@ export default function InfluencerOnboarding() {
   const [platforms, setPlatforms] = useState({});
   const [niches, setNiches] = useState(new Set());
   const [form, setForm] = useState({ fullName:'', phone:'', city:'', bio:'' });
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [errors, setErrors] = useState({});
   const [done, setDone] = useState(false);
 
@@ -260,6 +262,7 @@ export default function InfluencerOnboarding() {
         platforms,
         instagram: platforms.instagram?.handle || '',
         followers: primary.followers || '',
+        avatarUrl,
       });
       setDone(true);
     } catch (err) {
@@ -419,6 +422,16 @@ export default function InfluencerOnboarding() {
                 <p className="q-sub">Basic info so brands can reach out. This is the last step — we'll take you to your dashboard next.</p>
 
                 <div className="form-col">
+                  <div className="fld">
+                    <label>Profile photo <span style={{ color:'var(--fg-mute)', fontWeight:400 }}>— optional, but creators with a photo get 3× more brand views</span></label>
+                    <AvatarUpload
+                      value={avatarUrl}
+                      onChange={setAvatarUrl}
+                      label="Add a selfie"
+                      hint="A clear face shot helps brands recognise you. JPG or PNG, up to 8 MB."
+                    />
+                  </div>
+
                   <div className="fld">
                     <label>Full name <span className="req">*</span></label>
                     <div className="inp">

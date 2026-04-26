@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
+import AvatarUpload from '../../components/ui/AvatarUpload';
 
 const OWNER_ONB_CSS = `
 .im-onb .chip-row{display:flex;flex-wrap:wrap;gap:10px}
@@ -63,6 +64,7 @@ export default function OwnerOnboarding() {
     business: '', category: '', city: '',
     website: '', phone: '', budget: '', description: '',
   });
+  const [avatarUrl, setAvatarUrl] = useState('');
   const [errors, setErrors] = useState({});
   const [done, setDone] = useState(false);
 
@@ -96,6 +98,7 @@ export default function OwnerOnboarding() {
         phone: form.phone.trim(),
         budget: budgetLabel,
         description: form.description.trim(),
+        avatarUrl,
       });
       setDone(true);
     } catch (err) {
@@ -161,6 +164,17 @@ export default function OwnerOnboarding() {
                 <p className="q-sub">Your brand name, category, and city — this is what creators will see when they browse briefs.</p>
 
                 <div className="form-col">
+                  <div className="fld">
+                    <label>Brand logo or photo <span style={{ color:'var(--fg-mute)', fontWeight:400 }}>— optional, but campaigns with a logo get 4× more applicants</span></label>
+                    <AvatarUpload
+                      value={avatarUrl}
+                      onChange={setAvatarUrl}
+                      label="Add logo"
+                      hint="Upload your logo or a storefront photo. JPG or PNG, up to 8 MB."
+                      shape="square"
+                    />
+                  </div>
+
                   <div className="fld">
                     <label>Business name <span className="req">*</span></label>
                     <div className="inp">
