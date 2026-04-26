@@ -24,6 +24,8 @@ import OwnerApplicantReview from './pages/owner/OwnerApplicantReview';
 import PublicInfluencerProfile from './pages/owner/PublicInfluencerProfile';
 import OwnerProfile from './pages/owner/OwnerProfile';
 import OwnerBrowseInfluencers from './pages/owner/OwnerBrowseInfluencers';
+import PitchesList from './pages/shared/PitchesList';
+import PitchThread from './pages/shared/PitchThread';
 
 // Influencer
 import InfluencerOnboarding from './pages/influencer/InfluencerOnboarding';
@@ -123,6 +125,12 @@ function AppRoutes() {
       <Route path="/owner/browse" element={
         <ProtectedRoute allowedRole="owner"><OwnerBrowseInfluencers /></ProtectedRoute>
       } />
+      <Route path="/owner/inbox" element={
+        <ProtectedRoute allowedRole="owner"><PitchesList /></ProtectedRoute>
+      } />
+      <Route path="/owner/inbox/:id" element={
+        <ProtectedRoute allowedRole="owner"><PitchThread /></ProtectedRoute>
+      } />
 
       {/* Influencer Routes */}
       <Route path="/influencer/onboarding" element={
@@ -148,6 +156,12 @@ function AppRoutes() {
       } />
       <Route path="/influencer/brands/:id" element={
         <ProtectedRoute allowedRole="influencer"><PublicBrandProfile /></ProtectedRoute>
+      } />
+      <Route path="/influencer/pitches" element={
+        <ProtectedRoute allowedRole="influencer"><PitchesList /></ProtectedRoute>
+      } />
+      <Route path="/influencer/pitches/:id" element={
+        <ProtectedRoute allowedRole="influencer"><PitchThread /></ProtectedRoute>
       } />
 
       {/* Fallback */}

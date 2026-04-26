@@ -30,6 +30,42 @@ const CSS = `
 .pp-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .pp-gal img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:var(--surface-faint);cursor:zoom-in;transition:.15s}
 .pp-gal img:hover{transform:scale(1.02);border-color:var(--accent)}
+
+.pp-cta{display:flex;gap:10px;margin-top:18px;flex-wrap:wrap}
+.pp-cta .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:999px;font-size:13.5px;font-weight:500;border:1px solid transparent;cursor:pointer;transition:.15s;font-family:var(--sans)}
+.pp-cta .btn-line{border-color:var(--line-2);color:var(--fg);background:var(--surface-1)}
+.pp-cta .btn-line:hover{background:var(--surface-1-hover)}
+.pp-cta .btn-solid{background:var(--accent);color:var(--accent-ink);font-weight:500}
+.pp-cta .btn-solid:hover{filter:brightness(1.08);transform:translateY(-1px)}
+
+.pp-modal-back{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.72);backdrop-filter:blur(8px);display:grid;place-items:center;padding:20px}
+.pp-modal{width:min(560px,100%);max-height:calc(100vh - 40px);background:var(--bg-2);color:var(--fg);border:1px solid var(--line);border-radius:18px;display:flex;flex-direction:column;overflow:hidden;font-family:var(--sans);box-shadow:0 40px 90px -20px rgba(0,0,0,.6)}
+.pp-modal h4{font-family:var(--serif);font-size:24px;margin:0;font-weight:400;letter-spacing:-.01em}
+.pp-modal h4 em{font-style:italic;color:var(--fg-dim)}
+.pp-modal .head{padding:22px 24px 8px}
+.pp-modal .head .sub{font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg-mute);margin-bottom:8px}
+.pp-modal .body{padding:14px 24px;flex:1;overflow:auto}
+.pp-modal textarea{width:100%;min-height:240px;border-radius:12px;border:1px solid var(--line-2);background:var(--surface-1);color:var(--fg);padding:16px 18px;font-family:var(--sans);font-size:14.5px;outline:none;line-height:1.6;resize:vertical;transition:.15s}
+.pp-modal textarea:focus{border-color:var(--accent);background:var(--accent-soft);box-shadow:0 0 0 3px rgba(212,244,52,0.08)}
+.pp-modal .err{color:var(--danger);font-family:var(--mono);font-size:11px;letter-spacing:.08em;margin-top:8px}
+.pp-modal .foot{padding:14px 24px;border-top:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:14px;background:var(--bg)}
+.pp-modal .foot .info{font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--fg-mute)}
+.pp-modal .actions{display:inline-flex;gap:14px;align-items:center}
+.pp-modal .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:999px;font-size:13.5px;font-weight:500;cursor:pointer;transition:.15s;font-family:var(--sans);white-space:nowrap;border:1px solid var(--line-2)}
+.pp-modal .btn-line{color:var(--fg);background:var(--surface-1)}
+.pp-modal .btn-line:hover:not(:disabled){background:var(--surface-1-hover);border-color:var(--fg-mute);color:var(--fg)}
+.pp-modal .btn-solid{background:var(--accent);color:var(--accent-ink);font-weight:600;border-color:var(--accent)}
+.pp-modal .btn-solid:hover:not(:disabled){filter:brightness(1.08);transform:translateY(-1px);border-color:var(--accent)}
+.pp-modal .btn:disabled{opacity:.45;cursor:not-allowed;filter:none;transform:none}
+
+@media (max-width:640px){
+  .pp-modal{width:100%;border-radius:14px}
+  .pp-modal .head{padding:20px 20px 6px}
+  .pp-modal h4{font-size:22px}
+  .pp-modal .body{padding:12px 20px}
+  .pp-modal .foot{padding:12px 20px;flex-wrap:wrap}
+  .pp-modal textarea{min-height:200px}
+}
 `;
 
 if (typeof document !== 'undefined' && !document.getElementById('pp-styles')) {
@@ -45,6 +81,10 @@ export default function PublicBrandProfile() {
   const location = useLocation();
   const returnTo = location.state?.returnTo || '/influencer/brands';
   const returnLabel = location.state?.returnLabel || 'Back to brands';
+  const [pitchOpen, setPitchOpen] = useState(false);
+  const [pitchBody, setPitchBody] = useState('');
+  const [pitchErr, setPitchErr] = useState('');
+  const [sending, setSending] = useState(false);
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(true);
@@ -92,6 +132,12 @@ export default function PublicBrandProfile() {
                     <span className="pp-pill">★ {data.rating.score.toFixed(1)} ({data.rating.count})</span>
                   )}
                 </div>
+                <div className="pp-cta">
+                  <button className="btn btn-solid" onClick={() => { setPitchErr(''); setPitchOpen(true); }}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4z"/></svg>
+                    Send a pitch
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -135,6 +181,50 @@ export default function PublicBrandProfile() {
           </>
         )}
       </div>
+
+      {pitchOpen && (
+        <div className="pp-modal-back" onClick={() => !sending && setPitchOpen(false)}>
+          <div className="pp-modal" onClick={(e) => e.stopPropagation()}>
+            <div className="head">
+              <div className="sub">Pitch · {p.business || 'this brand'}</div>
+              <h4>Send your <em>opening message.</em></h4>
+            </div>
+            <div className="body">
+              <textarea
+                placeholder="Hi! I'm a [niche] creator with [reach]. Here's why I think we'd be a great fit…"
+                value={pitchBody}
+                onChange={(e) => setPitchBody(e.target.value)}
+                autoFocus
+                disabled={sending}
+              />
+              {pitchErr && <div className="err">{pitchErr}</div>}
+            </div>
+            <div className="foot">
+              <span className="info">{pitchBody.trim().length} / 4000</span>
+              <div className="actions">
+                <button className="btn btn-line" onClick={() => setPitchOpen(false)} disabled={sending}>Cancel</button>
+                <button
+                  className="btn btn-solid"
+                  disabled={sending || !pitchBody.trim()}
+                  onClick={async () => {
+                    setSending(true); setPitchErr('');
+                    try {
+                      const thread = await api.startPitch({ brandId: id, body: pitchBody.trim() });
+                      navigate(`/influencer/pitches/${thread.id}`);
+                    } catch (e) {
+                      setPitchErr(e.message || 'Could not send pitch.');
+                    } finally {
+                      setSending(false);
+                    }
+                  }}
+                >
+                  {sending ? 'Sending…' : 'Send pitch →'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </InfluencerLayout>
   );
 }

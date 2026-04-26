@@ -101,6 +101,47 @@ class PublicBrandProfile(BaseModel):
     rating: Optional[RatingSummary] = None
 
 
+# ----- Pitches (creator-initiated DMs to brands) -----
+
+class PitchStartRequest(BaseModel):
+    brandId: str
+    body: str = Field(min_length=1, max_length=4000)
+
+
+class PitchMessageRequest(BaseModel):
+    body: str = Field(min_length=1, max_length=4000)
+
+
+class PitchMessage(BaseModel):
+    id: str
+    threadId: str
+    authorId: str
+    authorRole: Optional[str] = None
+    body: str
+    createdAt: str
+
+
+class PitchThreadSummary(BaseModel):
+    id: str
+    influencerId: str
+    brandId: str
+    createdAt: str
+    lastMessageAt: str
+    unreadCount: int = 0
+    counterparty: Optional[dict[str, Any]] = None
+    lastMessage: Optional[PitchMessage] = None
+
+
+class PitchThreadDetail(BaseModel):
+    id: str
+    influencerId: str
+    brandId: str
+    createdAt: str
+    lastMessageAt: str
+    counterparty: Optional[dict[str, Any]] = None
+    messages: list[PitchMessage] = []
+
+
 # ----- Campaigns -----
 
 class CampaignCreateRequest(BaseModel):

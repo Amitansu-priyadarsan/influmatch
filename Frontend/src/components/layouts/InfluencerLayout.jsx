@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -91,6 +91,10 @@ const NAV = [
     svg:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 21h18M5 21V7l7-4 7 4v14M9 9h.01M9 13h.01M9 17h.01M15 9h.01M15 13h.01M15 17h.01"/></svg>
   },
   {
+    to:'/influencer/pitches', label:'My Pitches',
+    svg:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+  },
+  {
     to:'/influencer/campaigns', label:'My Campaigns',
     svg:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M3 11l18-7v16L3 13z"/><path d="M7 12v5"/></svg>
   },
@@ -120,6 +124,7 @@ export default function InfluencerLayout({ children, title }) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
 
   const handleLogout = () => { logout(); navigate('/login'); };
@@ -144,14 +149,17 @@ export default function InfluencerLayout({ children, title }) {
         </div>
 
         <nav className="sb-nav">
-          {NAV.map((n) => (
-            <NavLink key={n.to} to={n.to} onClick={() => setOpen(false)}
-              className={({ isActive }) => 'sb-link' + (isActive ? ' active' : '')}>
-              <span className="ico">{n.svg}</span>
-              <span>{n.label}</span>
-              <span className="arrow">→</span>
-            </NavLink>
-          ))}
+          {NAV.map((n) => {
+            const prefixHit = (n.matchPrefixes || []).some((p) => location.pathname.startsWith(p));
+            return (
+              <NavLink key={n.to} to={n.to} onClick={() => setOpen(false)}
+                className={({ isActive }) => 'sb-link' + (isActive || prefixHit ? ' active' : '')}>
+                <span className="ico">{n.svg}</span>
+                <span>{n.label}</span>
+                <span className="arrow">→</span>
+              </NavLink>
+            );
+          })}
         </nav>
 
         <div className="sb-foot">

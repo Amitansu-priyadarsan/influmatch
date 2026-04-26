@@ -114,6 +114,16 @@ export const api = {
     listBrands: () => request('/brands'),
     getBrand: (id) => request(`/brands/${id}`),
 
+    // Pitches (creator → brand DMs, distinct from campaign comments)
+    startPitch: ({ brandId, body }) =>
+        request('/pitches/threads', { method: 'POST', body: { brandId, body } }),
+    listPitchThreads: () => request('/pitches/threads'),
+    getPitchThread: (id) => request(`/pitches/threads/${id}`),
+    sendPitchMessage: (id, body) =>
+        request(`/pitches/threads/${id}/messages`, { method: 'POST', body: { body } }),
+    markPitchRead: (id) =>
+        request(`/pitches/threads/${id}/read`, { method: 'POST' }),
+
     // Comments (negotiation thread)
     listComments: (campaignId, influencerId) =>
         request(`/applications/${campaignId}/${influencerId}/comments`),

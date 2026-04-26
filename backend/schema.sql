@@ -95,3 +95,33 @@ alter table public.app_users            enable row level security;
 alter table public.influencer_profiles  enable row level security;
 alter table public.owner_profiles       enable row level security;
 alter table public.tokens               enable row level security;
+
+-- ---------------------------------------------------------
+-- Direct pitches: creator-initiated DM threads with brands.
+-- Distinct from per-campaign comments — these are off-campaign,
+-- "I'd love to work with you" pitches.
+-- ---------------------------------------------------------
+create table if not exists public.pitch_threads (
+    id              uuid primary key default gen_random_uuid(),
+    influencer_id   uuid not null references public.app_users(id) on delete cascade,
+    brand_id        uuid not null references public.app_users(id) on delete cascade,
+    created_at      timestamptz not null default now(),
+    last_message_at timestamptz not null default now(),
+    inf_last_read   timestamptz,
+    brand_last_read timestamptz,
+    unique (influencer_id, brand_id)
+);
+create index if not exists pitch_threads_inf_idx   on public.pitch_threads (influencer_id, last_message_at desc);
+create index if not exists pitch_threads_brand_idx on public.pitch_threads (brand_id, last_message_at desc);
+
+create table if not exists public.pitch_messages (
+    id          uuid primary key default gen_random_uuid(),
+    thread_id   uuid not null references public.pitch_threads(id) on delete cascade,
+    author_id   uuid not null references public.app_users(id) on delete cascade,
+    body        text not null,
+    created_at  timestamptz not null default now()
+);
+create index if not exists pitch_messages_thread_idx on public.pitch_messages (thread_id, created_at);
+
+alter table public.pitch_threads  enable row level security;
+alter table public.pitch_messages enable row level security;
