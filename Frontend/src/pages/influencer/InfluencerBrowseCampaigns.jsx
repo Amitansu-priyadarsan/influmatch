@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import InfluencerLayout from '../../components/layouts/InfluencerLayout';
 
@@ -120,6 +120,7 @@ function formatCompensation(c) {
 export default function InfluencerBrowseCampaigns() {
   const { user, campaigns, applyToCampaign } = useAuth();
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [search, setSearch] = useState('');
   const [detail, setDetail] = useState(null);
   const [applyMode, setApplyMode] = useState(false);
@@ -143,6 +144,9 @@ export default function InfluencerBrowseCampaigns() {
     setApplyMode(false);
     setApplied(false);
     setMessage('');
+    if (searchParams.get('campaign') !== c.id) {
+      setSearchParams({ campaign: c.id }, { replace: true });
+    }
   };
 
   const closeModal = () => {
@@ -152,7 +156,26 @@ export default function InfluencerBrowseCampaigns() {
     setMessage('');
     setProposedPrice('');
     setProposedNote('');
+    if (searchParams.get('campaign')) {
+      setSearchParams({}, { replace: true });
+    }
   };
+
+  // Re-open the campaign modal when ?campaign=<id> is present (e.g. coming
+  // back from the brand profile via the back button).
+  useEffect(() => {
+    const id = searchParams.get('campaign');
+    if (!id) return;
+    if (detail?.id === id) return;
+    const match = campaigns.find((c) => c.id === id);
+    if (match) {
+      setDetail(match);
+      setApplyMode(false);
+      setApplied(false);
+      setMessage('');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [campaigns, searchParams]);
 
   const openConversation = (campaignId) => {
     closeModal();
@@ -245,6 +268,9 @@ export default function InfluencerBrowseCampaigns() {
         onClose={closeModal}
         user={user}
         onOpenConversation={openConversation}
+        onViewBrand={(ownerId) => navigate(`/influencer/brands/${ownerId}`, {
+          state: { returnTo: `/influencer/browse?campaign=${detail.id}`, returnLabel: 'Back to campaign' },
+        })}
       />}
     </InfluencerLayout>
   );
@@ -255,7 +281,7 @@ function Modal({
   message, setMessage,
   proposedPrice, setProposedPrice,
   proposedNote, setProposedNote,
-  applied, onApply, onClose, user, onOpenConversation,
+  applied, onApply, onClose, user, onOpenConversation, onViewBrand,
 }) {
   const myApp = (detail.applications || []).find((a) => a.influencerId === user.id);
   const msgCount = (myApp?.comments || []).length;
@@ -289,7 +315,24 @@ function Modal({
           <>
             <div className="m-kick">Campaign · {detail.brand}</div>
             <h3>{detail.title}</h3>
-            <div className="m-brand">{detail.brand}</div>
+            <div className="m-brand" style={{ display:'flex', alignItems:'center', gap:12, flexWrap:'wrap' }}>
+              <span>{detail.brand}</span>
+              {detail.ownerId && (
+                <button
+                  type="button"
+                  onClick={() => onViewBrand && onViewBrand(detail.ownerId)}
+                  style={{
+                    fontFamily:'var(--mono)', fontSize:10.5, letterSpacing:'.14em', textTransform:'uppercase',
+                    color:'var(--accent)', background:'var(--accent-soft)', border:'1px solid var(--accent-border)',
+                    padding:'5px 12px', borderRadius:999, cursor:'pointer', transition:'.15s',
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.filter = 'brightness(1.1)'; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.filter = 'none'; }}
+                >
+                  View brand profile →
+                </button>
+              )}
+            </div>
 
             <p className="m-offer">{detail.offer}</p>
 

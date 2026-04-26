@@ -23,6 +23,7 @@ import OwnerApplicants from './pages/owner/OwnerApplicants';
 import OwnerApplicantReview from './pages/owner/OwnerApplicantReview';
 import PublicInfluencerProfile from './pages/owner/PublicInfluencerProfile';
 import OwnerProfile from './pages/owner/OwnerProfile';
+import OwnerBrowseInfluencers from './pages/owner/OwnerBrowseInfluencers';
 
 // Influencer
 import InfluencerOnboarding from './pages/influencer/InfluencerOnboarding';
@@ -118,6 +119,9 @@ function AppRoutes() {
       } />
       <Route path="/owner/profile" element={
         <ProtectedRoute allowedRole="owner"><OwnerProfile /></ProtectedRoute>
+      } />
+      <Route path="/owner/browse" element={
+        <ProtectedRoute allowedRole="owner"><OwnerBrowseInfluencers /></ProtectedRoute>
       } />
 
       {/* Influencer Routes */}

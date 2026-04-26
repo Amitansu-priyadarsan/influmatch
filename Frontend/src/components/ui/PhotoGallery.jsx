@@ -6,22 +6,25 @@ import { useEffect, useState } from 'react';
  * GalleryUpload for editing.
  */
 const PG_CSS = `
-.pg-wrap{display:grid;grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 1fr;gap:8px;border-radius:14px;overflow:hidden;aspect-ratio:16/10;background:var(--surface-faint)}
-.pg-wrap.count-1{grid-template-columns:1fr;grid-template-rows:1fr;aspect-ratio:16/10}
-.pg-wrap.count-2{grid-template-columns:1fr 1fr;grid-template-rows:1fr;aspect-ratio:16/10}
-.pg-wrap.count-3{grid-template-columns:2fr 1fr;grid-template-rows:1fr 1fr;aspect-ratio:16/10}
-.pg-wrap.count-4{grid-template-columns:2fr 1fr 1fr;grid-template-rows:1fr 1fr;aspect-ratio:16/10}
-.pg-cell{position:relative;overflow:hidden;cursor:zoom-in;background:var(--surface-tint)}
+.pg-wrap{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.pg-wrap.count-1{grid-template-columns:repeat(5,1fr)}
+.pg-wrap.count-2{grid-template-columns:repeat(2,1fr);max-width:520px}
+.pg-wrap.count-3{grid-template-columns:repeat(3,1fr)}
+.pg-wrap.count-4{grid-template-columns:repeat(4,1fr)}
+.pg-wrap.count-5{grid-template-columns:repeat(5,1fr)}
+.pg-wrap.count-1 .pg-cell{max-width:280px}
+.pg-cell{position:relative;overflow:hidden;cursor:zoom-in;background:var(--surface-tint);border-radius:12px;aspect-ratio:1/1;border:1px solid var(--line)}
 .pg-cell img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .35s ease}
-.pg-cell:hover img{transform:scale(1.04)}
-.pg-cell::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 60%,rgba(0,0,0,.3) 100%);opacity:0;transition:.2s}
+.pg-cell:hover img{transform:scale(1.05)}
+.pg-cell::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,transparent 65%,rgba(0,0,0,.25) 100%);opacity:0;transition:.2s;pointer-events:none}
 .pg-cell:hover::after{opacity:1}
-.pg-wrap.count-1 .pg-cell:nth-child(1),
-.pg-wrap.count-2 .pg-cell{grid-column:auto;grid-row:auto}
-.pg-wrap.count-3 .pg-cell:nth-child(1){grid-row:1/3}
-.pg-wrap.count-4 .pg-cell:nth-child(1){grid-row:1/3}
-.pg-wrap.count-5 .pg-cell:nth-child(1){grid-row:1/3}
-.pg-cell .more{position:absolute;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.5);color:#fff;font-family:var(--mono);font-size:14px;letter-spacing:.18em;text-transform:uppercase;font-weight:500}
+.pg-cell:hover{border-color:var(--accent)}
+
+@media (max-width:720px){
+  .pg-wrap,.pg-wrap.count-3,.pg-wrap.count-4,.pg-wrap.count-5{grid-template-columns:repeat(3,1fr)}
+  .pg-wrap.count-2{grid-template-columns:repeat(2,1fr)}
+  .pg-wrap.count-1 .pg-cell{max-width:none}
+}
 
 .pg-empty{padding:50px;text-align:center;border:1px dashed var(--line-2);border-radius:14px;color:var(--fg-mute);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;background:var(--surface-faint)}
 
@@ -36,7 +39,6 @@ const PG_CSS = `
 .pg-lb-count{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:rgba(255,255,255,.7);padding:8px 16px;border-radius:999px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15)}
 
 @media (max-width:640px){
-  .pg-wrap{aspect-ratio:1/1}
   .pg-lb-arrow.l{left:8px}
   .pg-lb-arrow.r{right:8px}
 }

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import InfluencerLayout from '../../components/layouts/InfluencerLayout';
 import PhotoGallery from '../../components/ui/PhotoGallery';
 import { api } from '../../lib/api';
@@ -42,6 +42,9 @@ if (typeof document !== 'undefined' && !document.getElementById('pp-styles')) {
 export default function PublicBrandProfile() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const returnTo = location.state?.returnTo || '/influencer/brands';
+  const returnLabel = location.state?.returnLabel || 'Back to brands';
   const [data, setData] = useState(null);
   const [err, setErr] = useState('');
   const [loading, setLoading] = useState(true);
@@ -67,7 +70,7 @@ export default function PublicBrandProfile() {
   return (
     <InfluencerLayout title={p.business || 'Brand'}>
       <div className="pp-shell">
-        <span className="pp-back" onClick={() => navigate('/influencer/brands')}>← Back to brands</span>
+        <span className="pp-back" onClick={() => navigate(returnTo)}>← {returnLabel}</span>
 
         {loading ? (
           <div className="pp-empty">Loading…</div>

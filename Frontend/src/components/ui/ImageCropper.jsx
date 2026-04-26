@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 /**
  * ImageCropper — modal cropper with zoom + pan, no external deps.
@@ -21,9 +21,11 @@ const CROPPER_CSS = `
 .icr-x{width:34px;height:34px;border-radius:50%;background:var(--surface-faint);border:1px solid var(--line);display:grid;place-items:center;cursor:pointer;color:var(--fg)}
 .icr-x:hover{background:var(--surface-1-hover);color:var(--danger)}
 
-.icr-stage{position:relative;background:#000;height:min(60vh,440px);overflow:hidden;touch-action:none;user-select:none}
+.icr-stage{position:relative;background:#000;height:min(60vh,440px);overflow:hidden;touch-action:none;user-select:none;cursor:grab}
+.icr-stage:active{cursor:grabbing}
 .icr-img{position:absolute;left:50%;top:50%;will-change:transform;pointer-events:none;-webkit-user-drag:none}
 .icr-mask{position:absolute;inset:0;pointer-events:none;display:grid;place-items:center}
+.icr-mask *{pointer-events:none}
 .icr-frame{box-shadow:0 0 0 9999px rgba(0,0,0,.55);outline:1.5px solid rgba(255,255,255,.85);position:relative}
 .icr-frame.circle{border-radius:50%}
 .icr-frame .grid-v,.icr-frame .grid-h{position:absolute;background:rgba(255,255,255,.35)}
@@ -131,11 +133,11 @@ export default function ImageCropper({
   const drawnH = ih * scale;
 
   // Clamp pan so the crop frame stays inside the image bounds.
-  const clampPan = (x, y) => {
+  const clampPan = useCallback((x, y) => {
     const maxTx = Math.max(0, (drawnW - frame.w) / 2);
     const maxTy = Math.max(0, (drawnH - frame.h) / 2);
     return { x: clamp(x, -maxTx, maxTx), y: clamp(y, -maxTy, maxTy) };
-  };
+  }, [drawnW, drawnH, frame.w, frame.h]);
 
   useEffect(() => {
     const c = clampPan(tx, ty);
@@ -154,29 +156,43 @@ export default function ImageCropper({
     return () => ro.disconnect();
   }, []);
 
-  // Drag to pan
+  // Live pan refs — listeners read/write these so the effect can bind once
+  // for the modal's lifetime without tearing down mid-drag.
+  const panRef = useRef({ tx: 0, ty: 0 });
+  useEffect(() => { panRef.current = { tx, ty }; }, [tx, ty]);
+  const clampRef = useRef(clampPan);
+  useEffect(() => { clampRef.current = clampPan; }, [clampPan]);
+  const zoomLimitsRef = useRef({ min: minZoom, max: maxZoom });
+  useEffect(() => { zoomLimitsRef.current = { min: minZoom, max: maxZoom }; }, [minZoom, maxZoom]);
+
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
-    let dragging = false;
-    let startX = 0, startY = 0, startTx = 0, startTy = 0;
+    const drag = { active: false, sx: 0, sy: 0, stx: 0, sty: 0 };
 
     const onDown = (e) => {
-      dragging = true;
       const p = e.touches ? e.touches[0] : e;
-      startX = p.clientX; startY = p.clientY;
-      startTx = tx; startTy = ty;
+      drag.active = true;
+      drag.sx = p.clientX; drag.sy = p.clientY;
+      drag.stx = panRef.current.tx; drag.sty = panRef.current.ty;
+      if (e.cancelable && !e.touches) e.preventDefault();
     };
     const onMove = (e) => {
-      if (!dragging) return;
+      if (!drag.active) return;
       const p = e.touches ? e.touches[0] : e;
-      const dx = p.clientX - startX;
-      const dy = p.clientY - startY;
-      const c = clampPan(startTx + dx, startTy + dy);
+      const dx = p.clientX - drag.sx;
+      const dy = p.clientY - drag.sy;
+      const c = clampRef.current(drag.stx + dx, drag.sty + dy);
       setTx(c.x); setTy(c.y);
-      e.preventDefault();
+      if (e.cancelable) e.preventDefault();
     };
-    const onUp = () => { dragging = false; };
+    const onUp = () => { drag.active = false; };
+    const onWheel = (e) => {
+      e.preventDefault();
+      const { min, max } = zoomLimitsRef.current;
+      const delta = -e.deltaY * 0.0015;
+      setZoom((z) => clamp(z + delta * z, min, max));
+    };
 
     el.addEventListener('mousedown', onDown);
     window.addEventListener('mousemove', onMove);
@@ -184,12 +200,6 @@ export default function ImageCropper({
     el.addEventListener('touchstart', onDown, { passive: true });
     window.addEventListener('touchmove', onMove, { passive: false });
     window.addEventListener('touchend', onUp);
-
-    const onWheel = (e) => {
-      e.preventDefault();
-      const delta = -e.deltaY * 0.0015;
-      setZoom((z) => clamp(z + delta * z, minZoom, maxZoom));
-    };
     el.addEventListener('wheel', onWheel, { passive: false });
 
     return () => {
@@ -201,8 +211,7 @@ export default function ImageCropper({
       window.removeEventListener('touchend', onUp);
       el.removeEventListener('wheel', onWheel);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [tx, ty, drawnW, drawnH, frame.w, frame.h, minZoom, maxZoom]);
+  }, []);
 
   // Build cropped output
   const apply = async () => {

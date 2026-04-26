@@ -44,7 +44,10 @@ const PROFILE_CSS = `
 .im-prof .kv .cell .v.empty{color:var(--fg-mute);font-style:italic;font-family:var(--serif)}
 
 .im-prof .plats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-.im-prof .plat{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface-faint)}
+.im-prof .plat{display:flex;align-items:center;gap:14px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--surface-faint);color:inherit;text-decoration:none;transition:.15s}
+.im-prof a.plat{cursor:pointer}
+.im-prof a.plat:hover{border-color:var(--accent);background:var(--surface-tint)}
+.im-prof a.plat:hover .pi{color:var(--accent)}
 .im-prof .plat .pi{width:32px;height:32px;border-radius:8px;background:var(--surface-tint);border:1px solid var(--line-2);display:grid;place-items:center;color:var(--fg-dim);flex:none}
 .im-prof .plat .pn{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--fg)}
 .im-prof .plat .ph{font-size:13px;color:var(--fg-dim);margin-top:2px}
@@ -90,6 +93,24 @@ const PLATFORM_ICONS = {
   linkedin:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 114 0v4M12 10v7" strokeLinecap="round"/></svg>,
   substack:<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" strokeLinecap="round"><path d="M4 5h16M4 10h16M4 15h16v5l-8-4-8 4z"/></svg>,
 };
+
+function platformUrl(id, handle) {
+  if (!handle) return null;
+  const h = String(handle).trim();
+  if (!h) return null;
+  if (/^https?:\/\//i.test(h)) return h;
+  if (/^[\w-]+\.[\w.-]+/.test(h) && !h.startsWith('@')) return 'https://' + h.replace(/^\/+/, '');
+  const u = h.replace(/^@/, '');
+  switch (id) {
+    case 'instagram': return `https://instagram.com/${u}`;
+    case 'youtube':   return `https://youtube.com/@${u}`;
+    case 'tiktok':    return `https://tiktok.com/@${u}`;
+    case 'twitter':   return `https://twitter.com/${u}`;
+    case 'linkedin':  return `https://linkedin.com/in/${u}`;
+    case 'substack':  return `https://${u}.substack.com`;
+    default: return null;
+  }
+}
 
 function computePct(profile) {
   if (!profile) return 0;
@@ -231,27 +252,39 @@ export default function InfluencerProfile() {
                 <div className="plat-empty">No platforms connected yet.</div>
               ) : platformEntries.length > 0 ? (
                 <div className="plats">
-                  {platformEntries.map(([id, v]) => (
-                    <div key={id} className="plat">
-                      <div className="pi">{PLATFORM_ICONS[id] || PLATFORM_ICONS.instagram}</div>
-                      <div>
-                        <div className="pn">{PLATFORM_LABELS[id] || id}</div>
-                        <div className="ph">{v.handle || '—'}</div>
-                      </div>
-                      <div className="fol">{v.followers || '—'}</div>
-                    </div>
-                  ))}
+                  {platformEntries.map(([id, v]) => {
+                    const url = platformUrl(id, v.handle);
+                    const Tag = url ? 'a' : 'div';
+                    const props = url ? { href: url, target: '_blank', rel: 'noopener noreferrer' } : {};
+                    return (
+                      <Tag key={id} className="plat" {...props}>
+                        <div className="pi">{PLATFORM_ICONS[id] || PLATFORM_ICONS.instagram}</div>
+                        <div>
+                          <div className="pn">{PLATFORM_LABELS[id] || id}</div>
+                          <div className="ph">{v.handle || '—'}</div>
+                        </div>
+                        <div className="fol">{v.followers || '—'}</div>
+                      </Tag>
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="plats">
-                  <div className="plat">
-                    <div className="pi">{PLATFORM_ICONS.instagram}</div>
-                    <div>
-                      <div className="pn">Instagram</div>
-                      <div className="ph">{profile.instagram}</div>
-                    </div>
-                    <div className="fol">{profile.followers || '—'}</div>
-                  </div>
+                  {(() => {
+                    const url = platformUrl('instagram', profile.instagram);
+                    const Tag = url ? 'a' : 'div';
+                    const props = url ? { href: url, target: '_blank', rel: 'noopener noreferrer' } : {};
+                    return (
+                      <Tag className="plat" {...props}>
+                        <div className="pi">{PLATFORM_ICONS.instagram}</div>
+                        <div>
+                          <div className="pn">Instagram</div>
+                          <div className="ph">{profile.instagram}</div>
+                        </div>
+                        <div className="fol">{profile.followers || '—'}</div>
+                      </Tag>
+                    );
+                  })()}
                 </div>
               )}
             </div>

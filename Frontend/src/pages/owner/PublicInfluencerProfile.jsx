@@ -30,7 +30,27 @@ const CSS = `
 .opp-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
 .opp-gal img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:var(--surface-faint);cursor:zoom-in;transition:.15s}
 .opp-gal img:hover{transform:scale(1.02);border-color:var(--accent)}
+a.opp-stat{display:block;text-decoration:none;color:inherit;cursor:pointer;transition:.15s}
+a.opp-stat:hover{border-color:var(--accent);background:var(--surface-tint)}
 `;
+
+function platformUrl(id, handle) {
+  if (!handle) return null;
+  const h = String(handle).trim();
+  if (!h) return null;
+  if (/^https?:\/\//i.test(h)) return h;
+  if (/^[\w-]+\.[\w.-]+/.test(h) && !h.startsWith('@')) return 'https://' + h.replace(/^\/+/, '');
+  const u = h.replace(/^@/, '');
+  switch ((id || '').toLowerCase()) {
+    case 'instagram': return `https://instagram.com/${u}`;
+    case 'youtube':   return `https://youtube.com/@${u}`;
+    case 'tiktok':    return `https://tiktok.com/@${u}`;
+    case 'twitter':   return `https://twitter.com/${u}`;
+    case 'linkedin':  return `https://linkedin.com/in/${u}`;
+    case 'substack':  return `https://${u}.substack.com`;
+    default: return null;
+  }
+}
 
 if (typeof document !== 'undefined' && !document.getElementById('opp-styles')) {
   const tag = document.createElement('style');
@@ -115,19 +135,24 @@ export default function PublicInfluencerProfile() {
               <div className="opp-section">
                 <h3>Platforms</h3>
                 <div className="opp-grid">
-                  {platformEntries.map(([name, info]) => (
-                    <div key={name} className="opp-stat">
-                      <div className="k">{name}</div>
-                      <div className="v">
-                        {info?.handle || '—'}
-                        {info?.followers && (
-                          <div style={{ fontFamily:'var(--mono)', fontSize:11, color:'var(--fg-mute)', letterSpacing:'.14em', marginTop:4 }}>
-                            {info.followers} followers
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                  {platformEntries.map(([name, info]) => {
+                    const url = platformUrl(name, info?.handle);
+                    const Tag = url ? 'a' : 'div';
+                    const props = url ? { href: url, target: '_blank', rel: 'noopener noreferrer' } : {};
+                    return (
+                      <Tag key={name} className="opp-stat" {...props}>
+                        <div className="k">{name}</div>
+                        <div className="v">
+                          {info?.handle || '—'}
+                          {info?.followers && (
+                            <div style={{ fontFamily:'var(--mono)', fontSize:11, color:'var(--fg-mute)', letterSpacing:'.14em', marginTop:4 }}>
+                              {info.followers} followers
+                            </div>
+                          )}
+                        </div>
+                      </Tag>
+                    );
+                  })}
                 </div>
               </div>
             )}
