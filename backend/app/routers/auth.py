@@ -49,6 +49,7 @@ def _hydrate_user(user_row: dict) -> UserResponse:
                 "instagram": p.get("instagram"),
                 "followers": p.get("followers"),
                 "avatarUrl": p.get("avatar_url"),
+                "gallery": p.get("gallery") or [],
             }
 
     elif user_row["role"] == "owner":
@@ -72,6 +73,7 @@ def _hydrate_user(user_row: dict) -> UserResponse:
                 "budget": p.get("budget"),
                 "description": p.get("description"),
                 "avatarUrl": p.get("avatar_url"),
+                "gallery": p.get("gallery") or [],
             }
 
     # Pull cached rating off the user row itself; if it's missing (e.g. row

@@ -38,11 +38,13 @@ create table if not exists public.influencer_profiles (
     instagram    text,
     followers    text,
     avatar_url   text,
+    gallery      jsonb,
     updated_at   timestamptz not null default now()
 );
 
 -- Add the column on existing installs (no-op if already present).
 alter table public.influencer_profiles add column if not exists avatar_url text;
+alter table public.influencer_profiles add column if not exists gallery jsonb;
 
 -- ---------------------------------------------------------
 -- Brand / owner profile
@@ -57,11 +59,13 @@ create table if not exists public.owner_profiles (
     budget       text,
     description  text,
     avatar_url   text,
+    gallery      jsonb,
     updated_at   timestamptz not null default now()
 );
 
 -- Add the column on existing installs (no-op if already present).
 alter table public.owner_profiles add column if not exists avatar_url text;
+alter table public.owner_profiles add column if not exists gallery jsonb;
 
 -- ---------------------------------------------------------
 -- Tokens (both anonymous "session" tokens and signed-in "auth" tokens)

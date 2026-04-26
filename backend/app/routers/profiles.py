@@ -32,6 +32,7 @@ def _influencer_snapshot(p: dict | None) -> dict | None:
         "instagram": p.get("instagram"),
         "followers": p.get("followers"),
         "avatarUrl": p.get("avatar_url"),
+        "gallery": p.get("gallery") or [],
     }
 
 
@@ -46,6 +47,7 @@ def _brand_snapshot(p: dict | None) -> dict | None:
         "budget": p.get("budget"),
         "description": p.get("description"),
         "avatarUrl": p.get("avatar_url"),
+        "gallery": p.get("gallery") or [],
     }
 
 

@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import OwnerLayout from '../../components/layouts/OwnerLayout';
+import PhotoGallery from '../../components/ui/PhotoGallery';
 import { api } from '../../lib/api';
 
 // Reuses pp-* styles defined by PublicBrandProfile if loaded; we redefine
@@ -26,6 +27,9 @@ const CSS = `
 .opp-stat .k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--fg-mute);margin-bottom:6px}
 .opp-stat .v{font-family:var(--serif);font-size:18px;color:var(--fg);font-weight:400;word-break:break-word}
 .opp-empty{color:var(--fg-mute);text-align:center;padding:60px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+.opp-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.opp-gal img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:var(--surface-faint);cursor:zoom-in;transition:.15s}
+.opp-gal img:hover{transform:scale(1.02);border-color:var(--accent)}
 `;
 
 if (typeof document !== 'undefined' && !document.getElementById('opp-styles')) {
@@ -97,6 +101,13 @@ export default function PublicInfluencerProfile() {
               <div className="opp-section">
                 <h3>Bio</h3>
                 <p>{p.bio}</p>
+              </div>
+            )}
+
+            {(p.gallery || []).length > 0 && (
+              <div className="opp-section">
+                <h3>Portfolio</h3>
+                <PhotoGallery photos={p.gallery} />
               </div>
             )}
 

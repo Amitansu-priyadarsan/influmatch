@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import AvatarUpload from '../../components/ui/AvatarUpload';
+import GalleryUpload from '../../components/ui/GalleryUpload';
 
 const ONBOARDING_CSS = `
 .im-onb{min-height:100vh;background:var(--bg);color:var(--fg);font-family:var(--sans);-webkit-font-smoothing:antialiased;position:relative}
@@ -204,6 +205,7 @@ export default function InfluencerOnboarding() {
   const [niches, setNiches] = useState(new Set());
   const [form, setForm] = useState({ fullName:'', phone:'', city:'', bio:'' });
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [gallery, setGallery] = useState([]);
   const [errors, setErrors] = useState({});
   const [done, setDone] = useState(false);
 
@@ -263,6 +265,7 @@ export default function InfluencerOnboarding() {
         instagram: platforms.instagram?.handle || '',
         followers: primary.followers || '',
         avatarUrl,
+        gallery,
       });
       setDone(true);
     } catch (err) {
@@ -429,6 +432,15 @@ export default function InfluencerOnboarding() {
                       onChange={setAvatarUrl}
                       label="Add a selfie"
                       hint="A clear face shot helps brands recognise you. JPG or PNG, up to 8 MB."
+                    />
+                  </div>
+
+                  <div className="fld">
+                    <label>Portfolio photos <span style={{ color:'var(--fg-mute)', fontWeight:400 }}>— up to 5, optional. Creators with 3+ samples get 5× more match offers.</span></label>
+                    <GalleryUpload
+                      value={gallery}
+                      onChange={setGallery}
+                      hint="Add your best content shots — Reels stills, product photos, lifestyle frames. Brands use these to gauge your style."
                     />
                   </div>
 

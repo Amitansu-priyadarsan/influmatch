@@ -72,6 +72,7 @@ class InfluencerOnboardingRequest(BaseModel):
     instagram: Optional[str] = ""
     followers: Optional[str] = ""
     avatarUrl: Optional[str] = ""
+    gallery: Optional[list[str]] = None
 
 
 class OwnerOnboardingRequest(BaseModel):
@@ -83,6 +84,7 @@ class OwnerOnboardingRequest(BaseModel):
     budget: Optional[str] = ""
     description: Optional[str] = ""
     avatarUrl: Optional[str] = ""
+    gallery: Optional[list[str]] = None
 
 
 # ----- Public profiles -----

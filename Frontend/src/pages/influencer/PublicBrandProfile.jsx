@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import InfluencerLayout from '../../components/layouts/InfluencerLayout';
+import PhotoGallery from '../../components/ui/PhotoGallery';
 import { api } from '../../lib/api';
 
 const CSS = `
@@ -26,6 +27,9 @@ const CSS = `
 .pp-stat .v{font-family:var(--serif);font-size:20px;color:var(--fg);font-weight:400}
 .pp-stat .v a{color:var(--accent);font-size:14px;font-family:var(--sans)}
 .pp-empty{color:var(--fg-mute);text-align:center;padding:60px;font-family:var(--mono);letter-spacing:.14em;text-transform:uppercase;font-size:12px}
+.pp-gal{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px}
+.pp-gal img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:var(--surface-faint);cursor:zoom-in;transition:.15s}
+.pp-gal img:hover{transform:scale(1.02);border-color:var(--accent)}
 `;
 
 if (typeof document !== 'undefined' && !document.getElementById('pp-styles')) {
@@ -92,6 +96,13 @@ export default function PublicBrandProfile() {
               <div className="pp-section">
                 <h3>About the brand</h3>
                 <p>{p.description}</p>
+              </div>
+            )}
+
+            {(p.gallery || []).length > 0 && (
+              <div className="pp-section">
+                <h3>Brand photos</h3>
+                <PhotoGallery photos={p.gallery} />
               </div>
             )}
 

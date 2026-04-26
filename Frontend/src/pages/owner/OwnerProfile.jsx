@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import OwnerLayout from '../../components/layouts/OwnerLayout';
 import AvatarUpload from '../../components/ui/AvatarUpload';
+import GalleryUpload from '../../components/ui/GalleryUpload';
+import PhotoGallery from '../../components/ui/PhotoGallery';
 
 const PROFILE_CSS = `
 .op-prof .head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:32px;flex-wrap:wrap}
@@ -43,6 +45,9 @@ const PROFILE_CSS = `
 .op-prof .fld input:focus,.op-prof .fld textarea:focus{border-color:var(--accent);background:var(--accent-soft)}
 .op-prof .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px}
 .op-prof .saved{display:inline-flex;align-items:center;gap:8px;padding:8px 14px;border:1px solid var(--accent);background:var(--accent-soft);color:var(--accent);border-radius:999px;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
+.op-prof .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.op-prof .gallery-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:var(--surface-faint)}
+.op-prof .gallery-empty{padding:32px;text-align:center;border:1px dashed var(--line-2);border-radius:12px;color:var(--fg-mute);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
 
 @media (max-width:900px){
   .op-prof .hero{grid-template-columns:auto 1fr;gap:18px}
@@ -70,6 +75,7 @@ export default function OwnerProfile() {
     budget: user.profile?.budget || '',
     description: user.profile?.description || '',
     avatarUrl: user.profile?.avatarUrl || '',
+    gallery: user.profile?.gallery || [],
   });
 
   const profile = user.profile || {};
@@ -87,6 +93,7 @@ export default function OwnerProfile() {
       budget: form.budget.trim(),
       description: form.description.trim(),
       avatarUrl: form.avatarUrl || '',
+      gallery: form.gallery || [],
     });
     setEditing(false);
     setJustSaved(true);
@@ -103,6 +110,7 @@ export default function OwnerProfile() {
       budget: profile.budget || '',
       description: profile.description || '',
       avatarUrl: profile.avatarUrl || '',
+      gallery: profile.gallery || [],
     });
     setEditing(false);
   };
@@ -157,6 +165,14 @@ export default function OwnerProfile() {
                 <div className="cell" style={{ gridColumn:'1 / -1' }}><div className="l">Description</div><div className={'v' + (!profile.description ? ' empty' : '')}>{profile.description || 'No description yet — tell creators what your brand is about.'}</div></div>
               </div>
             </div>
+
+            <div className="sec-head"><h3>Brand <em>photos.</em></h3></div>
+            <div className="card">
+              <PhotoGallery
+                photos={profile.gallery || []}
+                emptyText="No brand photos yet — add up to 5 product or storefront shots."
+              />
+            </div>
           </>
         )}
 
@@ -172,6 +188,14 @@ export default function OwnerProfile() {
                   label="Add logo"
                   hint="Your logo or a storefront photo. JPG or PNG, up to 8 MB."
                   shape="square"
+                />
+              </div>
+              <div className="fld">
+                <label>Brand photos <span className="opt">— up to 5. Brands with 3+ photos get 4× more applicants.</span></label>
+                <GalleryUpload
+                  value={form.gallery}
+                  onChange={(v) => update('gallery', v)}
+                  hint="Product shots, storefront photos, or campaign visuals."
                 />
               </div>
               <div className="grid-2">

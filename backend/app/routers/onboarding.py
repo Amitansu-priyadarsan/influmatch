@@ -35,6 +35,7 @@ async def influencer_onboarding(
         "instagram": payload.instagram,
         "followers": payload.followers,
         "avatar_url": payload.avatarUrl or None,
+        "gallery": (payload.gallery or [])[:5],
     }).execute()
 
     upd = (
@@ -66,6 +67,7 @@ async def owner_onboarding(
         "budget": payload.budget,
         "description": payload.description,
         "avatar_url": payload.avatarUrl or None,
+        "gallery": (payload.gallery or [])[:5],
     }).execute()
 
     upd = (

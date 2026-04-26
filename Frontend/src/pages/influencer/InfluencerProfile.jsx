@@ -2,6 +2,8 @@ import { useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import InfluencerLayout from '../../components/layouts/InfluencerLayout';
 import AvatarUpload from '../../components/ui/AvatarUpload';
+import GalleryUpload from '../../components/ui/GalleryUpload';
+import PhotoGallery from '../../components/ui/PhotoGallery';
 
 const PROFILE_CSS = `
 .im-prof .head{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:32px;flex-wrap:wrap}
@@ -48,6 +50,9 @@ const PROFILE_CSS = `
 .im-prof .plat .ph{font-size:13px;color:var(--fg-dim);margin-top:2px}
 .im-prof .plat .fol{margin-left:auto;font-family:var(--serif);font-size:20px;color:var(--accent);font-style:italic}
 .im-prof .plat-empty{color:var(--fg-mute);font-family:var(--mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase}
+.im-prof .gallery-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}
+.im-prof .gallery-grid img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:12px;border:1px solid var(--line);background:var(--surface-faint)}
+.im-prof .gallery-empty{padding:32px;text-align:center;border:1px dashed var(--line-2);border-radius:12px;color:var(--fg-mute);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase}
 
 .im-prof .fld{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
 .im-prof .fld label{font-size:13px;color:var(--fg);font-weight:500}
@@ -110,6 +115,7 @@ export default function InfluencerProfile() {
     instagram: user.profile?.instagram || '',
     followers: user.profile?.followers || '',
     avatarUrl: user.profile?.avatarUrl || '',
+    gallery: user.profile?.gallery || [],
   });
 
   const profile = user.profile || {};
@@ -131,6 +137,7 @@ export default function InfluencerProfile() {
       instagram: form.instagram.trim(),
       followers: form.followers.trim(),
       avatarUrl: form.avatarUrl || '',
+      gallery: form.gallery || [],
       platforms: profile.platforms || {},
       niches: profile.niches || [],
       contentTypes: profile.contentTypes || [],
@@ -150,6 +157,7 @@ export default function InfluencerProfile() {
       instagram: profile.instagram || '',
       followers: profile.followers || '',
       avatarUrl: profile.avatarUrl || '',
+      gallery: profile.gallery || [],
     });
     setEditing(false);
   };
@@ -209,6 +217,14 @@ export default function InfluencerProfile() {
               </div>
             </div>
 
+            <div className="sec-head"><h3>Portfolio <em>photos.</em></h3></div>
+            <div className="card">
+              <PhotoGallery
+                photos={profile.gallery || []}
+                emptyText="No portfolio photos yet — add up to 5 to stand out."
+              />
+            </div>
+
             <div className="sec-head"><h3>Platforms <em>& reach.</em></h3></div>
             <div className="card">
               {platformEntries.length === 0 && !profile.instagram ? (
@@ -253,6 +269,14 @@ export default function InfluencerProfile() {
                   onChange={(v) => update('avatarUrl', v)}
                   label="Add photo"
                   hint="A clear face shot helps brands recognise you. JPG or PNG, up to 8 MB."
+                />
+              </div>
+              <div className="fld">
+                <label>Portfolio photos <span className="opt">— up to 5. Creators with 3+ samples get 5× more match offers.</span></label>
+                <GalleryUpload
+                  value={form.gallery}
+                  onChange={(v) => update('gallery', v)}
+                  hint="Show your style: Reels stills, product shots, lifestyle frames."
                 />
               </div>
               <div className="grid-2">

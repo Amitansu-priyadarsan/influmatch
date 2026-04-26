@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import AvatarUpload from '../../components/ui/AvatarUpload';
+import GalleryUpload from '../../components/ui/GalleryUpload';
 
 const OWNER_ONB_CSS = `
 .im-onb .chip-row{display:flex;flex-wrap:wrap;gap:10px}
@@ -65,6 +66,7 @@ export default function OwnerOnboarding() {
     website: '', phone: '', budget: '', description: '',
   });
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [gallery, setGallery] = useState([]);
   const [errors, setErrors] = useState({});
   const [done, setDone] = useState(false);
 
@@ -99,6 +101,7 @@ export default function OwnerOnboarding() {
         budget: budgetLabel,
         description: form.description.trim(),
         avatarUrl,
+        gallery,
       });
       setDone(true);
     } catch (err) {
@@ -279,6 +282,15 @@ export default function OwnerOnboarding() {
                         value={form.description}
                         onChange={(e) => update('description', e.target.value)} />
                     </div>
+                  </div>
+
+                  <div className="fld">
+                    <label>Brand photos <span style={{ color:'var(--fg-mute)', fontWeight:400 }}>— up to 5, optional. Brands with 3+ photos get 4× more applicants.</span></label>
+                    <GalleryUpload
+                      value={gallery}
+                      onChange={setGallery}
+                      hint="Add product shots, storefront photos, or campaign visuals. This is what creators see when they scout your brand."
+                    />
                   </div>
 
                   <div className="success">
