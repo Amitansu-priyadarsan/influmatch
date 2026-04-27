@@ -133,8 +133,8 @@ export default function InfluencerProfile() {
     city: user.profile?.city || '',
     bio: user.profile?.bio || '',
     niche: user.profile?.niche || '',
-    instagram: user.profile?.instagram || '',
-    followers: user.profile?.followers || '',
+    instagram: user.profile?.instagram || user.profile?.platforms?.instagram?.handle || '',
+    followers: user.profile?.followers || user.profile?.platforms?.instagram?.followers || '',
     avatarUrl: user.profile?.avatarUrl || '',
     gallery: user.profile?.gallery || [],
   });
@@ -148,6 +148,18 @@ export default function InfluencerProfile() {
   const update = (k, v) => setForm((f) => ({ ...f, [k]: v }));
 
   const save = () => {
+    const ig = form.instagram.trim();
+    const fol = form.followers.trim();
+    const mergedPlatforms = { ...(profile.platforms || {}) };
+    if (ig || fol) {
+      mergedPlatforms.instagram = {
+        ...(mergedPlatforms.instagram || {}),
+        handle: ig,
+        followers: fol,
+      };
+    } else {
+      delete mergedPlatforms.instagram;
+    }
     completeOnboarding({
       ...profile,
       fullName: form.fullName.trim(),
@@ -155,11 +167,11 @@ export default function InfluencerProfile() {
       city: form.city.trim(),
       bio: form.bio.trim(),
       niche: form.niche.trim(),
-      instagram: form.instagram.trim(),
-      followers: form.followers.trim(),
+      instagram: ig,
+      followers: fol,
       avatarUrl: form.avatarUrl || '',
       gallery: form.gallery || [],
-      platforms: profile.platforms || {},
+      platforms: mergedPlatforms,
       niches: profile.niches || [],
       contentTypes: profile.contentTypes || [],
     });
@@ -175,8 +187,8 @@ export default function InfluencerProfile() {
       city: profile.city || '',
       bio: profile.bio || '',
       niche: profile.niche || '',
-      instagram: profile.instagram || '',
-      followers: profile.followers || '',
+      instagram: profile.instagram || profile.platforms?.instagram?.handle || '',
+      followers: profile.followers || profile.platforms?.instagram?.followers || '',
       avatarUrl: profile.avatarUrl || '',
       gallery: profile.gallery || [],
     });

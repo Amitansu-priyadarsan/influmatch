@@ -69,6 +69,7 @@ const CSS = `
 .im-chat .ctx .card .quote.note .l{color:#ffb86b}
 
 .im-chat .back-bar{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.back-bar{display:flex;align-items:center;gap:10px;margin-bottom:32px}
 .im-chat .back-bar .back{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid var(--line-2);border-radius:8px;background:var(--surface-1);color:var(--fg-dim);font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:.15s}
 .im-chat .back-bar .back:hover{color:var(--fg);border-color:var(--accent-border)}
 
@@ -234,11 +235,41 @@ export default function InfluencerConversation() {
         {/* ---------- Chat column ---------- */}
         <div className="pane">
           <div className="pane-head">
-            <div className="av">{(campaign.brand || 'B').charAt(0)}</div>
-            <div className="who">
-              <b>{campaign.brand || 'Brand'}</b>
-              <span>{campaign.title}</span>
-            </div>
+            {campaign.ownerId ? (
+              <>
+                <div
+                  className="av"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/influencer/brands/${campaign.ownerId}`)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/influencer/brands/${campaign.ownerId}`); }}
+                  style={{ cursor: 'pointer' }}
+                  title={`View ${campaign.brand || 'brand'} profile`}
+                >
+                  {(campaign.brand || 'B').charAt(0)}
+                </div>
+                <div
+                  className="who"
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => navigate(`/influencer/brands/${campaign.ownerId}`)}
+                  onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/influencer/brands/${campaign.ownerId}`); }}
+                  style={{ cursor: 'pointer' }}
+                  title={`View ${campaign.brand || 'brand'} profile`}
+                >
+                  <b>{campaign.brand || 'Brand'}</b>
+                  <span>{campaign.title}</span>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className="av">{(campaign.brand || 'B').charAt(0)}</div>
+                <div className="who">
+                  <b>{campaign.brand || 'Brand'}</b>
+                  <span>{campaign.title}</span>
+                </div>
+              </>
+            )}
             <span className={'pill ' + liveStatus}>{liveStatus}</span>
           </div>
 
@@ -285,7 +316,15 @@ export default function InfluencerConversation() {
 
         {/* ---------- Context column ---------- */}
         <div className="ctx">
-          <div className="card">
+          <div
+            className="card"
+            role={campaign.ownerId ? 'button' : undefined}
+            tabIndex={campaign.ownerId ? 0 : undefined}
+            onClick={campaign.ownerId ? () => navigate(`/influencer/brands/${campaign.ownerId}`) : undefined}
+            onKeyDown={campaign.ownerId ? (e) => { if (e.key === 'Enter') navigate(`/influencer/brands/${campaign.ownerId}`); } : undefined}
+            style={campaign.ownerId ? { cursor: 'pointer' } : undefined}
+            title={campaign.ownerId ? `View ${campaign.brand || 'brand'} profile` : undefined}
+          >
             <h4>{campaign.title}</h4>
             <div className="brand-line">{campaign.brand}</div>
             <p className="offer">{campaign.offer}</p>
@@ -302,7 +341,15 @@ export default function InfluencerConversation() {
             )}
           </div>
 
-          <div className="card">
+          <div
+            className="card"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate('/influencer/profile')}
+            onKeyDown={(e) => { if (e.key === 'Enter') navigate('/influencer/profile'); }}
+            style={{ cursor: 'pointer' }}
+            title="View your profile"
+          >
             <h4 style={{ fontSize: 16, fontFamily: 'var(--sans)', fontWeight: 600 }}>Your application</h4>
             <div className="row" style={{ borderTop: 0, paddingTop: 0 }}>
               <span className="k">Status</span>

@@ -288,8 +288,26 @@ export default function OwnerApplicantReview() {
         {/* ---------- Chat ---------- */}
         <div className="pane">
           <div className="pane-head">
-            <div className="av">{inf.profile?.fullName?.charAt(0) || 'C'}</div>
-            <div className="who">
+            <div
+              className="av"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/owner/influencers/${influencerId}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/owner/influencers/${influencerId}`); }}
+              style={{ cursor: 'pointer' }}
+              title={`View ${inf.profile?.fullName || 'creator'} profile`}
+            >
+              {inf.profile?.fullName?.charAt(0) || 'C'}
+            </div>
+            <div
+              className="who"
+              role="button"
+              tabIndex={0}
+              onClick={() => navigate(`/owner/influencers/${influencerId}`)}
+              onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/owner/influencers/${influencerId}`); }}
+              style={{ cursor: 'pointer' }}
+              title={`View ${inf.profile?.fullName || 'creator'} profile`}
+            >
               <b>{inf.profile?.fullName}</b>
               <span>@{inf.profile?.instagram} · {inf.profile?.followers}</span>
             </div>
@@ -336,7 +354,15 @@ export default function OwnerApplicantReview() {
         {/* ---------- Context column ---------- */}
         <div className="ctx">
           {/* Profile card */}
-          <div className="card">
+          <div
+            className="card"
+            role="button"
+            tabIndex={0}
+            onClick={() => navigate(`/owner/influencers/${influencerId}`)}
+            onKeyDown={(e) => { if (e.key === 'Enter') navigate(`/owner/influencers/${influencerId}`); }}
+            style={{ cursor: 'pointer' }}
+            title={`View ${inf.profile?.fullName || 'creator'} profile`}
+          >
             <div className="profile-block">
               <div className="av">{inf.profile?.fullName?.charAt(0) || 'C'}</div>
               <div className="who">
